@@ -1,23 +1,13 @@
-SELECT b.book_ref,
-       f.flight_id
-FROM   bookings b
-       JOIN tickets t
-         ON b.book_ref = t.book_ref
+ SELECT t.book_ref,
+       tf.flight_id
+FROM   tickets t
        JOIN ticket_flights tf
          ON t.ticket_no = tf.ticket_no
-       JOIN flights f
-         ON tf.flight_id = f.flight_id
-EXCEPT
-SELECT b2.book_ref,
-       f2.flight_id
-FROM   boarding_passes bp
-       JOIN ticket_flights tf2
-         ON bp.ticket_no = tf2.ticket_no
-       JOIN flights f2
-         ON bp.flight_id = f2.flight_id
-       JOIN tickets t2
-         ON tf2.ticket_no = t2.ticket_no
-       JOIN bookings b2
-         ON t2.book_ref = b2.book_ref
+WHERE  NOT EXISTS (SELECT *
+                   FROM   boarding_passes bp
+                   WHERE  bp.ticket_no = tf.ticket_no
+                          AND bp.flight_id = tf.flight_id)
+GROUP  BY t.book_ref,
+          tf.flight_id
 ORDER  BY book_ref,
-          flight_id ASC; 
+          flight_id ASC;  
