@@ -1,25 +1,24 @@
-WITH total_seats
-     AS (SELECT s.aircraft_code,
-                Count(*) AS seat_numbers
-         FROM   seats s
-         GROUP  BY s.aircraft_code),
-     occupied_seats
-     AS (SELECT f.flight_id,
-                Count(*) AS occupied_seats_numbers
-         FROM   flights f
-                JOIN boarding_passes bp
-                  ON f.flight_id = bp.flight_id
-         GROUP  BY f.flight_id),
-     flight_empty
-     AS (SELECT f.flight_id,
-                t.seat_numbers - o.occupied_seats_numbers AS empty_seats
-         FROM   flights f
-                JOIN total_seats t
-                  ON f.aircraft_code = t.aircraft_code
-                JOIN occupied_seats o
-                  ON f.flight_id = o.flight_id)
-SELECT flight_id,
-       empty_seats
-FROM   flight_empty
-WHERE  empty_seats = (SELECT Max(empty_seats)
-                      FROM   flight_empty); 
+WITH occupied_seat AS (
+    SELECT tf.flight_id, COUNT(*) AS asiento_reservado
+    FROM ticket_flights tf
+    GROUP BY tf.flight_id
+),seats_by_aircrafts AS (
+       SELECT aircraft_code, COUNT(*) AS total_seat
+       FROM seats 
+       GROUP BY aircraft_code
+),seats_by_flights AS (
+       SELECT f.flight_id, s.total_seat AS seats_number
+       FROM flights f
+       JOIN seats_by_aircrafts s ON f.aircraft_code=s.aircraft_code
+), empty_seat AS(
+       SELECT sf.flight_id,sf.seats_number-os.asiento_reservado AS empty_seat_number
+       FROM seats_by_flights sf
+       JOIN occupied_seat os ON os.flight_id=sf.flight_id
+)
+SELECT flight_id, empty_seat_number
+FROM empty_seat
+WHERE empty_seat_number = (
+    SELECT MAX(empty_seat_number)
+    FROM empty_seat
+)
+ORDER BY flight_id;
