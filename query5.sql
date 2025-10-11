@@ -1,4 +1,4 @@
- SELECT t.book_ref,
+SELECT t.book_ref,
        tf.flight_id
 FROM   tickets t
        JOIN ticket_flights tf
@@ -10,4 +10,4 @@ WHERE  NOT EXISTS (SELECT *
 GROUP  BY t.book_ref,
           tf.flight_id
 ORDER  BY book_ref,
-          flight_id ASC;  
+          flight_id ASC; 
