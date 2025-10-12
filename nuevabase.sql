@@ -98,7 +98,6 @@ ALTER TABLE ONLY public.aircrafts_data
 ALTER TABLE ONLY public.airports_data
     ADD CONSTRAINT airports_data_pkey PRIMARY KEY (airport_code);
 
-
 ALTER TABLE ONLY public.boarding_passes
     ADD CONSTRAINT boarding_passes_flight_id_boarding_no_key UNIQUE (flight_id, boarding_no);
 
@@ -116,9 +115,6 @@ ALTER TABLE ONLY public.flights
 
 ALTER TABLE ONLY public.flights
     ADD CONSTRAINT flights_pkey PRIMARY KEY (flight_id);
-
-ALTER TABLE ONLY public.seats
-    ADD CONSTRAINT seats_pkey PRIMARY KEY (aircraft_code, seat_no);
 
 ALTER TABLE ONLY public.seats
     ADD CONSTRAINT seats_pkey PRIMARY KEY (aircraft_code, seat_no);

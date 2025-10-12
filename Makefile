@@ -18,6 +18,12 @@ all: dropdb createdb restore shell
 mycomando:
 	@echo aqui va una descripcion
 	@cat myfichero.sql | psql mibasededatos
+## Comando para crear la base de datos con el nuevo diseño
+nuevabase:
+	@echo "Eliminando base de datos y creando nuevo diseño (nuevabase.sql)"
+	@$(DROPDB) nuevabase
+	@$(CREATEDB)
+	@cat nuevabase.sql | $(PSQL)
 createdb:
 	@echo Creando BBDD
 	@$(CREATEDB)
