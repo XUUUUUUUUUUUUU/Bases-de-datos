@@ -20,9 +20,11 @@ all: dropdb createdb restore shell
 nuevabase:
 	@echo "Eliminando base de datos y creando nuevo diseño (nuevabase.sql)"
 	@$(DROPDB) $(DBNAME)
+	@echo "Creando  BBDD"
 	@$(CREATEDB) 
 	@cat $(DBNAME).sql | $(PSQL)
 	@cat $(NEWDBNAME).sql | $(PSQL)
+	@echo "create psql shell"
 	@$(PSQL)
 createdb:
 	@echo Creando BBDD
