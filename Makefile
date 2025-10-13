@@ -19,17 +19,17 @@ all: dropdb createdb restore shell
 ## Comando para crear la base de datos con el nuevo diseño
 nuevabase:
 	@echo "Eliminando base de datos y creando nuevo diseño (nuevabase.sql)"
-	@$(DROPDB) $(NEWDBNAME) 
 	@$(DROPDB) $(DBNAME)
-	@$(CREATEDB)
-	@cat nuevabase.sql | $(PSQL)
+	@$(CREATEDB) 
+	@cat $(DBNAME).sql | $(PSQL)
+	@cat $(NEWDBNAME).sql | $(PSQL)
+	@$(PSQL)
 createdb:
 	@echo Creando BBDD
 	@$(CREATEDB)
 dropdb:
 	@echo Eliminando BBDD
 	@$(DROPDB) $(DBNAME)
-	@$(DROPDB) $(NEWDBNAME)
 	rm -f *.log
 dump:
 	@echo creando dumpfile
