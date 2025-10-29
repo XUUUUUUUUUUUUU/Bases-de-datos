@@ -1,4 +1,4 @@
-WITH booking_ticket AS(
+WITH booking_ticket AS( /* Nos devuelve todos los tickes de una book_ref*/
     SELECT b.book_ref,tf.ticket_no,tf.flight_id
     FROM bookings b
     JOIN tickets t ON t.book_ref=b.book_ref
@@ -7,7 +7,7 @@ WITH booking_ticket AS(
         SELECT bp.ticket_no,bp.flight_id
         FROM boarding_passes bp
     )
-), flight_available_seat_no AS (
+), flight_available_seat_no AS ( /* Nos devuelve asientos libres de cada vuelo que todavia no esta asignado*/
     SELECT bt.ticket_no,bt.flight_id,f.aircraft_code,s.seat_no
     FROM booking_ticket bt
     JOIN flights f ON f.flight_id=bt.flight_id
@@ -24,7 +24,4 @@ WITH booking_ticket AS(
         )
     )
     ORDER BY f.aircraft_code, s.seat_no ASC
-    LIMIT 1
 )
-SELECT *
-FROM flight_available_seat_no;
