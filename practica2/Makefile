@@ -35,7 +35,7 @@ shell:
 	@$(PSQL)
 
 
-EXE = odbc-connection-test odbc-connection-test-2 odbc-example1 odbc-example2 odbc-example3 odbc-example4 
+EXE = odbc-connection-test odbc-connection-test-2 odbc-example1 odbc-example2 odbc-example3b odbc-example4b 
 
 all : $(EXE)
 
