@@ -15,7 +15,7 @@ DROPDB = dropdb --if-exists
 PG_DUMP = pg_dump
 PG_RESTORE = pg_restore
 
-test01: dropdb createdb restore shell
+test01: dropdb createdb restore
 createdb:
 	@echo Creando BBDD
 	@$(CREATEDB)

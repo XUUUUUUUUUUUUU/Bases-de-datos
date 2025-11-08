@@ -13,6 +13,7 @@
 #define DEBUG 1
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define MAX_N_CHOICES 1000 /* Max rows can have array of result of query*/
 
 typedef struct _Windows {
     WINDOW *menu_win,

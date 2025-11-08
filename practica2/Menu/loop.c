@@ -287,7 +287,7 @@ void loop(_Windows *windows, _Menus *menus,
                 tmpStr1 = field_buffer((forms->search_form_items)[1], 0);
                 tmpStr2 = field_buffer((forms->search_form_items)[3], 0);
                 results_search(tmpStr1, tmpStr2, &n_out_choices, &(menus->out_win_choices),
-                               windows->cols_out_win - 4, windows->rows_out_win - 2);
+                               windows->cols_out_win - 4, MAX_N_CHOICES);
                 out_highlight = 0;
                 page = 0;
                 if (page_size < 1)
@@ -318,7 +318,7 @@ void loop(_Windows *windows, _Menus *menus,
                 (void)form_driver(forms->bpass_form, REQ_VALIDATION);
                 tmpStr1 = field_buffer((forms->bpass_form_items)[1], 0);
                 results_bpass(tmpStr1, &n_out_choices, &(menus->out_win_choices),
-                              windows->cols_out_win - 4, windows->rows_out_win - 2);
+                              windows->cols_out_win - 4, MAX_N_CHOICES);
                 out_highlight = 0;
                 page = 0;
                 if (page_size < 1)

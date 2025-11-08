@@ -4,7 +4,6 @@
 */
 #include "windows.h"
 
-
 static WINDOW *create_newwin(int height, int width, int starty, int startx,
                       char *title) {
     /** Create a window and draw a title
@@ -157,11 +156,11 @@ static void create_out(_Windows *windows, _Menus *menu)
                                      windows->out_title);
 
     menu->out_win_choices =
-            (char **) calloc(windows->rows_out_win, sizeof(char *));
+            (char **) calloc(MAX_N_CHOICES, sizeof(char *));
 
-    for (i = 0; i < windows->rows_out_win; i++)
+    for (i = 0; i < MAX_N_CHOICES; i++)
         (menu->out_win_choices)[i] =
-                (char *) calloc(windows->cols_out_win, sizeof(char *));
+                (char *) calloc(windows->cols_out_win+1, sizeof(char));
 }
 
 static void create_msg(_Windows *windows)
@@ -290,6 +289,7 @@ void print_out(WINDOW *win,
     int x=0, y=0, i=0;
     x = 2;
     y = 1;
+    wclear(win);
     (void) box(win, 0, 0);
     (void) mvwaddstr(win, 0, 2, title);
     for (i = 0; i < menuitems; ++i) {
