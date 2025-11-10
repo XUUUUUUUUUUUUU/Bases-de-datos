@@ -175,7 +175,7 @@ void results_search(char *from, char *to, char *date, /*añadir date*/
     if (strcmp((char *)connections, "1") == 0)
     {
       snprintf((*choices)[row], max_length, "%-4s  %-20s  %-20s  %s  %-3s  %-8s  \t "
-                                            "first_flight_id:%-4s first_aircraft_code:%-3s scheduled_departure:%-20s scheduled_arrival:%-20s \n second_flight_id:%s second_aircraft_code:%s scheduled_departure:%s scheduled_arrival:%s",
+                                            "first_flight_id:%-4s first_aircraft_code:%-3s scheduled_departure:%-20s scheduled_arrival:%-20s \n       second_flight_id:%s second_aircraft_code:%s scheduled_departure:%s scheduled_arrival:%s",
                first_flight, scheduled_departure, scheduled_arrival, connections, free_seats, total_duration,
                first_id, code1, depart1, arrival1, second_id, code2, depart2, arrival2);
       row++;
@@ -183,7 +183,7 @@ void results_search(char *from, char *to, char *date, /*añadir date*/
     else
     {
       snprintf((*choices)[row], max_length, "%-4s  %-20s  %-20s  %s  %-3s  %-8s  \t "
-                                            "first_flight_id:%-4s first_aircraft_code:%-3s scheduled_departure:%-20s scheduled_arrival:%-20s no hay segundo vuelos",
+                                            "first_flight_id:%-4s first_aircraft_code:%-3s scheduled_departure:%-20s scheduled_arrival:%-20s \n       no hay segundo vuelos",
                first_flight, scheduled_departure, scheduled_arrival, connections, free_seats, total_duration,
                first_id, code1, depart1, arrival1);
       row++;
