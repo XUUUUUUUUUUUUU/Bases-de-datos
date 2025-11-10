@@ -82,7 +82,7 @@ void results_search(char *from, char *to, char *date, /*añadir date*/
                               "			  f.scheduled_departure AS second_deaparture_time,"
                               "			  f.scheduled_arrival AS second_arrival_time "
                               " FROM flights f "
-                              " WHERE f.departure_airport = ? AND f.arrival_airport = ? AND DATE(f.scheduled_arrival) = ? "
+                              " WHERE f.departure_airport = ? AND f.arrival_airport = ? AND DATE(f.scheduled_departure) = ? "
                               "), "
 
                               "connecting_flights AS ("
@@ -125,7 +125,8 @@ void results_search(char *from, char *to, char *date, /*añadir date*/
                               " JOIN flights f2 ON f1.arrival_airport = f2.departure_airport "
                               " WHERE ((f2.scheduled_arrival - f1.scheduled_departure) <= INTERVAL '24 hours') "
                               "   AND f1.departure_airport = ? AND f2.arrival_airport = ? "
-                              "   AND DATE(f2.scheduled_arrival) = ? "
+                              "   AND DATE(f1.scheduled_departure) = ? "
+                              "   AND f2.scheduled_departure > f1.scheduled_arrival"
                               "   AND f1.scheduled_departure < f2.scheduled_arrival "
                               ") "
 
