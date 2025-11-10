@@ -3,6 +3,7 @@
  windows related auxiliary functions
 */
 #include "windows.h"
+#include<string.h>
 
 static WINDOW *create_newwin(int height, int width, int starty, int startx,
                       char *title) {
@@ -160,7 +161,7 @@ static void create_out(_Windows *windows, _Menus *menu)
 
     for (i = 0; i < MAX_N_CHOICES; i++)
         (menu->out_win_choices)[i] =
-                (char *) calloc(windows->cols_out_win+1, sizeof(char));
+                (char *) calloc(OUT_LINE_CAP, sizeof(char));
 }
 
 static void create_msg(_Windows *windows)
@@ -169,7 +170,7 @@ static void create_msg(_Windows *windows)
  */
 {
     windows->msg_win =
-            create_newwin(windows->height_menu_win + 1,
+            create_newwin(windows->height_menu_win + 6,
                           windows->terminal_ncols,
                           windows->terminal_nrows - windows->height_menu_win - 1,
                           0, windows->msg_title);
@@ -287,19 +288,37 @@ void print_out(WINDOW *win,
  */
 {
     int x=0, y=0, i=0;
+    char *line;
+    char *tab=NULL;
+    size_t len;
+    char buffer[512];
     x = 2;
     y = 1;
     wclear(win);
     (void) box(win, 0, 0);
     (void) mvwaddstr(win, 0, 2, title);
     for (i = 0; i < menuitems; ++i) {
+        line=choices[i];
+        tab=strchr(line,'\t');
+        if(tab)
+        {
+            len=tab-line;
+            if(len>=sizeof(buffer)) len=sizeof(buffer)-1;
+            strncpy(buffer,line,len);
+            buffer[len]='\0';
+
+        }else{
+            strncpy(buffer,line,sizeof(buffer)-1);
+            buffer[sizeof(buffer)-1]='\0';
+
+        }
         if (highlight == i) /* High light the present choice  */
         {
             (void) wattron(win, A_REVERSE);  /** set reverse attribute on */
-            (void) mvwprintw(win, y, x, "%s", choices[i]);
+            (void) mvwprintw(win, y, x, "%s", buffer);
             (void) wattroff(win, A_REVERSE); /** set reverse attribute off */
         } else
-            (void) mvwprintw(win, y, x, "%s", choices[i]);
+            (void) mvwprintw(win, y, x, "%s", buffer);
         y += 1;
     }
     (void) wrefresh(win);

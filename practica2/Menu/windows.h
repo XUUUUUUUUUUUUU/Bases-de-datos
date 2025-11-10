@@ -14,6 +14,11 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX_N_CHOICES 1000 /* Max rows can have array of result of query*/
+#define OUT_LINE_CAP 1024
+
+#if defined(__STRICT_ANSI__)
+int snprintf(char * /*restrict*/, size_t, const char * /*restrict*/, ...);
+#endif
 
 typedef struct _Windows {
     WINDOW *menu_win,

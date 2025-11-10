@@ -54,7 +54,7 @@ void loop(_Windows *windows, _Menus *menus,
     int focus = FOCUS_LEFT;       /* focus is in win_form/win_out window */
     int ch = 0;                   /* typed character */
     bool enterKey = FALSE;        /* has enter been presswed ? */
-    char buffer[128];             /* auxiliary buffer to compose messages */
+    char buffer[1024];             /* auxiliary buffer to compose messages */
     ITEM *auxItem = (ITEM *)NULL; /* item selected in the menu */
     int choice = -1;              /* index of the item selected in menu*/
     MENU *menu = NULL;            /* pointer to menu in menu_win*/
@@ -74,6 +74,7 @@ void loop(_Windows *windows, _Menus *menus,
     int page_element;             /* number of elements in the current page*/
     int max_page;                 /* max number of page can have*/
     int page_hl;                  /* the row which to higlight in the page*/
+    char *detail_len;             /* the position of separator beetween mesage of out windows and msg of result_search*/
 
     (void)curs_set(1); /* show cursor */
     menu = menus->menu;
@@ -88,7 +89,7 @@ void loop(_Windows *windows, _Menus *menus,
         ch = getch(); /* get char typed by user */
         if ((bool)DEBUG)
         {
-            (void)snprintf(buffer, 128, "key pressed %d %c (%d)", ch, ch, item_index(auxItem));
+            (void)snprintf(buffer, 1024, "key pressed %d %c (%d)", ch, ch, item_index(auxItem));
             write_msg(msg_win, buffer, -1, -1, windows->msg_title);
         }
 
@@ -194,7 +195,7 @@ void loop(_Windows *windows, _Menus *menus,
             else
                 focus = FOCUS_RIGHT;
 
-            (void)snprintf(buffer, 128, "focus in window %d", focus);
+            (void)snprintf(buffer, 1024, "focus in window %d", focus);
             write_msg(msg_win, buffer, -1, -1, windows->msg_title);
             /* If win_form is selected place the cursor in the right place */
             if (item_index(auxItem) == SEARCH && focus == FOCUS_LEFT)
@@ -289,7 +290,7 @@ void loop(_Windows *windows, _Menus *menus,
                 tmpStr2 = field_buffer((forms->search_form_items)[3], 0);
                 tmpStr3 = field_buffer((forms->search_form_items)[5], 0);
                 results_search(tmpStr1, tmpStr2, tmpStr3,&n_out_choices, &(menus->out_win_choices),
-                               windows->cols_out_win - 4, MAX_N_CHOICES);
+                               OUT_LINE_CAP-1, MAX_N_CHOICES);
                 out_highlight = 0;
                 page = 0;
                 if (page_size < 1)
@@ -301,13 +302,14 @@ void loop(_Windows *windows, _Menus *menus,
                           page_hl, windows->out_title);
                 if ((bool)DEBUG)
                 {
-                    (void)snprintf(buffer, 128, "arg1=%s, arg2=%s, arg3=%s", tmpStr1, tmpStr2,tmpStr3);
+                    (void)snprintf(buffer, 1024, "arg1=%s, arg2=%s, arg3=%s", tmpStr1, tmpStr2,tmpStr3);
                     write_msg(msg_win, buffer, -1, -1, windows->msg_title);
                 }
             }
             else if ((choice == SEARCH) && (focus == FOCUS_RIGHT))
             {
-                (void)snprintf(buffer, 128, "mes=%s ", (menus->out_win_choices)[out_highlight]);
+                detail_len=strchr(menus->out_win_choices[out_highlight],'\t');
+                (void)snprintf(buffer, 1024, "mes=%s ", (char*)(detail_len+1));
                 write_msg(msg_win, buffer,
                           -1, -1, windows->msg_title);
             }
@@ -320,7 +322,7 @@ void loop(_Windows *windows, _Menus *menus,
                 (void)form_driver(forms->bpass_form, REQ_VALIDATION);
                 tmpStr1 = field_buffer((forms->bpass_form_items)[1], 0);
                 results_bpass(tmpStr1, &n_out_choices, &(menus->out_win_choices),
-                              windows->cols_out_win - 4, MAX_N_CHOICES);
+                              OUT_LINE_CAP-1, MAX_N_CHOICES);
                 out_highlight = 0;
                 page = 0;
                 if (page_size < 1)
