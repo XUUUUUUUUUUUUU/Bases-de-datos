@@ -20,7 +20,7 @@ $(EXE): $(DEPS) $(OBJ)
 	$(CC) -o $(EXE) $(OBJ) $(LDLIBS)
 
 clean:
-	rm -f *.o core $(EXE)
+	rm -f *.o ../odbc.o core $(EXE)
 
 run:
 	./$(EXE)

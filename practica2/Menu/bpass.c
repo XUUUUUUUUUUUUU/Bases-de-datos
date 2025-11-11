@@ -129,7 +129,7 @@ SQLPrepare(stmt, (SQLCHAR *)
     {
         if (max_rows > 0)
         {
-            snprintf((*choices)[0], (size_t)max_length, "Query failed for book_ref=%s", bookID);
+            snprintf((*choices)[0], (size_t)max_length, "Error book_ref=%s", bookID);
             (*choices)[0][max_length - 1] = '\0';
             *n_choices = 1;
         }
@@ -152,7 +152,7 @@ SQLPrepare(stmt, (SQLCHAR *)
     }
     if (row == 0 && max_rows > 0)
     {
-        snprintf((*choices)[0], (size_t)max_length, "No boarding passes assigned for %s", bookID);
+        snprintf((*choices)[0], (size_t)max_length, "Ya se ha asignado tarjeta de embarque para book_ref=%s", bookID);
         *n_choices = 1;
     }
     else
