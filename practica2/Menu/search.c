@@ -6,6 +6,7 @@
 #include <sql.h>
 #include <sqlext.h>
 #include "../odbc.h"
+#include <ctype.h>
 
 void results_search(char *from, char *to, char *date, 
                     int *n_choices, char ***choices,
@@ -22,6 +23,8 @@ void results_search(char *from, char *to, char *date,
  */
 {
   int row = 0;
+  int i;
+  int valid_data =0;
   SQLHENV env;
   SQLHDBC dbc;
   SQLHSTMT stmt;
@@ -41,6 +44,44 @@ void results_search(char *from, char *to, char *date,
   SQLCHAR depart2[512];
   SQLCHAR arrival1[512];
   SQLCHAR arrival2[512];
+  SQLCHAR check[512];
+
+  /*Comprobar que from, to y date no esta vacio*/
+  for (i = 0; from[i]!='\0';i++)
+  {
+    if (!isspace((unsigned char)from[i])) /*si hay algunos carateres que no son espacio salta bucle*/
+    {
+      valid_data++;
+      break;
+    }
+  }
+
+  for (i = 0; to[i]!='\0';i++)
+  {
+    if (!isspace((unsigned char)to[i])) /*si hay algunos carateres que no son espacio salta bucle*/
+    {
+      valid_data++;
+      break;
+    }
+  }
+
+  for (i = 0; date[i]!='\0';i++)
+  {
+    if (!isspace((unsigned char)date[i])) /*si hay algunos carateres que no son espacio salta bucle*/
+    {
+      valid_data++;
+      break;
+    }
+  }
+
+  if(valid_data != 3)
+  {
+      
+    snprintf((*choices)[0], (size_t)max_length, "Fata datos para introducir\t Falta datos para introducir");
+    *n_choices = 1;
+    return;
+
+  }
 
   /* CONNECT */
   ret = odbc_connect(&env, &dbc);
@@ -52,6 +93,58 @@ void results_search(char *from, char *to, char *date,
   /* Allocate a statement handle */
   SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
 
+  /*Hacer una consulta antes de la consulta principal para ver si el aeropuerto existe o no*/
+  SQLPrepare(stmt,(SQLCHAR *) "SELECT COUNT(*) "
+                              "FROM airports_data "
+                              "WHERE airport_code = ? OR airport_code = ? ",SQL_NTS);
+
+  SQLBindParameter(stmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_C_LONG, 0, 0, from, 0, NULL);
+  SQLBindParameter(stmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_C_LONG, 0, 0, to, 0, NULL);
+
+  /*Hacer la consulta de check*/
+  ret = SQLExecute(stmt);
+  if (!SQL_SUCCEEDED(ret))
+  {
+    fprintf(stderr, "Error ejecutando consulta SQL\n");
+    SQLFreeHandle(SQL_HANDLE_STMT, stmt);
+    odbc_disconnect(env, dbc);
+    return;
+  }
+
+  /*obtener el resultado*/
+  SQLBindCol(stmt, 1, SQL_C_CHAR, check, sizeof(check), NULL);
+
+  if (SQL_SUCCEEDED(ret = SQLFetch(stmt)))
+  {
+    /*Si hay alguno aeropuerto que no existe*/
+    if (strcmp((char *)check, "2") != 0)
+    {
+      snprintf((*choices)[0], (size_t)max_length, "Alguno aeropuerto no existe\t Alguno aeropuerto no existe");
+      *n_choices = 1;
+
+      /*limpiar el stmt para la consulta principal*/
+      SQLCloseCursor(stmt);
+
+        /* free up statement handle */
+      SQLFreeHandle(SQL_HANDLE_STMT, stmt);
+
+      /* DISCONNECT */
+      ret = odbc_disconnect(env, dbc);
+      if (!SQL_SUCCEEDED(ret))
+      {
+        return;
+      }
+
+      return;
+
+    }
+  }
+
+  /*limpiar el stmt para la consulta principal*/
+  SQLCloseCursor(stmt);
+
+
+  /*La consulta principal*/
   SQLPrepare(stmt, (SQLCHAR *)"WITH direct_flights AS ("
                               " SELECT f.flight_id AS first_flight, "
                               "        f.scheduled_departure, f.scheduled_arrival, 0 AS connections, "
@@ -76,7 +169,7 @@ void results_search(char *from, char *to, char *date,
                               "			  f.scheduled_departure AS second_deaparture_time,"
                               "			  f.scheduled_arrival AS second_arrival_time "
                               " FROM flights f "
-                              " WHERE f.departure_airport = ? AND f.arrival_airport = ? AND DATE(f.scheduled_departure) = ? "
+                              " WHERE f.departure_airport = ? AND f.arrival_airport = ? AND DATE(f.scheduled_departure) = ?  AND f.status = 'Scheduled' "
                               "), "
 
                               "connecting_flights AS ("
@@ -122,6 +215,8 @@ void results_search(char *from, char *to, char *date,
                               "   AND DATE(f1.scheduled_departure) = ? "
                               "   AND f2.scheduled_departure > f1.scheduled_arrival"
                               "   AND f1.scheduled_departure < f2.scheduled_arrival "
+                              "   AND f1.status = 'Scheduled'"
+                              "   AND f2.status = 'Scheduled'"
                               ") "
 
                               "(SELECT * FROM direct_flights WHERE free_seats > 0) "

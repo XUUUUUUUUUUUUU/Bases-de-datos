@@ -22,7 +22,7 @@ WITH direct_flights AS (
                               			  f.scheduled_departure AS second_deaparture_time,
                               			  f.scheduled_arrival AS second_arrival_time 
                                FROM flights f 
-                               WHERE f.departure_airport = 'DME' AND f.arrival_airport = 'VKO' AND DATE(f.scheduled_departure) = '2017-09-09'
+                               WHERE f.departure_airport = 'DME' AND f.arrival_airport = 'VKO' AND DATE(f.scheduled_departure) = '2017-09-09' AND f.status = 'Scheduled'
                               ), 
 
                               connecting_flights AS (
@@ -68,6 +68,8 @@ WITH direct_flights AS (
                                 AND DATE (f1.scheduled_departure) = '2017-09-09'
 								AND f2.scheduled_departure > f1.scheduled_arrival
                                 AND f1.scheduled_departure < f2.scheduled_arrival 
+                                AND f2.status = 'Scheduled'
+                                AND f1.status = 'Scheduled'
                               ) 
 
                               (SELECT * FROM direct_flights WHERE free_seats > 0) 
