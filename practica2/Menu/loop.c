@@ -302,9 +302,15 @@ void loop(_Windows *windows, _Menus *menus,
                           page_hl, windows->out_title);
                 if ((bool)DEBUG)
                 {
-
-                    (void)snprintf(buffer, 1024, "From= %s, To= %s, Date= %s", tmpStr1, tmpStr2,tmpStr3);
-                    write_msg(msg_win, buffer, -1, -1, windows->msg_title);
+                    if(n_out_choices==1&&(menus->out_win_choices[0][0]='\t'))
+                    {
+                        (void)snprintf(buffer, 1024, "%s", menus->out_win_choices[0]+1);
+                        write_msg(msg_win, buffer, -1, -1, windows->msg_title);
+                    }
+                    else{
+                        (void)snprintf(buffer, 1024, "From= %s, To= %s, Date= %s", tmpStr1, tmpStr2,tmpStr3);
+                        write_msg(msg_win, buffer, -1, -1, windows->msg_title);
+                    }
                     
 
                 }

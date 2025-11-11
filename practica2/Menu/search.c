@@ -284,7 +284,7 @@ void results_search(char *from, char *to, char *date,
 
   if (row == 0 && max_rows > 0)
   {
-    snprintf((*choices)[0], (size_t)max_length, "No hay vuelo desde %s a %s en %s", from, to, date);
+    snprintf((*choices)[0], (size_t)max_length, "\t No hay vuelo desde %s a %s en %s", from, to, date);
     row = 1;
   }
 
