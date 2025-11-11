@@ -74,10 +74,11 @@ void results_search(char *from, char *to, char *date,
     }
   }
 
+  /*Cuando hay datos esta vacios*/
   if(valid_data != 3)
   {
       
-    snprintf((*choices)[0], (size_t)max_length, "Fata datos para introducir\t Falta datos para introducir");
+    snprintf((*choices)[0], (size_t)max_length, "\t Falta datos para introducir");
     *n_choices = 1;
     return;
 
@@ -119,7 +120,7 @@ void results_search(char *from, char *to, char *date,
     /*Si hay alguno aeropuerto que no existe*/
     if (strcmp((char *)check, "2") != 0)
     {
-      snprintf((*choices)[0], (size_t)max_length, "Alguno aeropuerto no existe\t Alguno aeropuerto no existe");
+      snprintf((*choices)[0], (size_t)max_length, "\t Alguno aeropuerto no existe");
       *n_choices = 1;
 
       /*limpiar el stmt para la consulta principal*/
