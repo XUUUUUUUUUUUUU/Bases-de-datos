@@ -26,5 +26,5 @@ run:
 	./$(EXE)
 
 valgrind:
-	valgrind --leak-check=full ./$(EXE)
+	valgrind --leak-check=full --log-file=valgrind.log ./$(EXE)
 

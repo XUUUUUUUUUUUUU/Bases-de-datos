@@ -1,19 +1,13 @@
 /*
- * Created by Alejandro Zheng on 3/5/21.
+ * Created by Alejandro Zheng on 09/11/2025.
  */
-/*06/11/2025 resolver el problema de que el menu solo deja meter una parte de date*/
-
-/* abrir un fichero (file) e imprimir from , to, dateguaro en fichero los resultados de consulta
-compongo query_result_set con los resultados de la consulta en vez de guardarlos en fichero
-Conecto BD, preparo consulta, ejecuto,
-*/
 #include "search.h"
 #include <stdio.h>
 #include <sql.h>
 #include <sqlext.h>
 #include "../odbc.h"
 
-void results_search(char *from, char *to, char *date, /*añadir date*/
+void results_search(char *from, char *to, char *date, 
                     int *n_choices, char ***choices,
                     int max_length,
                     int max_rows)
@@ -181,20 +175,21 @@ void results_search(char *from, char *to, char *date, /*añadir date*/
                first_id, code1, depart1, arrival1, second_id, code2, depart2, arrival2);
       row++;
     }
-    else
+    else if(strcmp((char*)connections, "0") == 0)
     {
       snprintf((*choices)[row], max_length, "%-4s  %-20s  %-20s  %s  %-3s  %-8s  \t "
-                                            "first_flight_id:%-4s first_aircraft_code:%-3s scheduled_departure:%-20s scheduled_arrival:%-20s \n       no hay segundo vuelos",
+                                            "first_flight_id:%-4s first_aircraft_code:%-3s scheduled_departure:%-20s scheduled_arrival:%-20s \n       no hay segundo vuelo",
                first_flight, scheduled_departure, scheduled_arrival, connections, free_seats, total_duration,
                first_id, code1, depart1, arrival1);
       row++;
     }
 
-    if (row == 0 && max_rows > 0)
-    {
-      snprintf((*choices)[0], (size_t)max_length, "No hay vuelo desde %s a %s en %S", from, to, date);
-      *n_choices = 1;
-    }
+  }
+
+  if (row == 0 && max_rows > 0)
+  {
+    snprintf((*choices)[0], (size_t)max_length, "No hay vuelo desde %s a %s en %s", from, to, date);
+    row = 1;
   }
 
   *n_choices = row;

@@ -302,14 +302,17 @@ void loop(_Windows *windows, _Menus *menus,
                           page_hl, windows->out_title);
                 if ((bool)DEBUG)
                 {
-                    (void)snprintf(buffer, 1024, "arg1=%s, arg2=%s, arg3=%s", tmpStr1, tmpStr2,tmpStr3);
+
+                    (void)snprintf(buffer, 1024, "From= %s, To= %s, Date= %s", tmpStr1, tmpStr2,tmpStr3);
                     write_msg(msg_win, buffer, -1, -1, windows->msg_title);
+                    
+
                 }
             }
             else if ((choice == SEARCH) && (focus == FOCUS_RIGHT))
             {
                 detail_len=strchr(menus->out_win_choices[out_highlight],'\t');
-                (void)snprintf(buffer, 1024, "mes=%s ", (char*)(detail_len+1));
+                (void)snprintf(buffer, 1024, "msg=%s ", (char*)(detail_len+1));
                 write_msg(msg_win, buffer,
                           -1, -1, windows->msg_title);
             }
