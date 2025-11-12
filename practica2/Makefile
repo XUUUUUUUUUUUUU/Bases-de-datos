@@ -13,7 +13,7 @@ PSQL = psql
 CREATEDB = createdb
 DROPDB = dropdb --if-exists
 PG_DUMP = pg_dump
-PG_RESTORE = pg_restore
+PG_RESTORE = pg_restore 
 
 test01: dropdb createdb restore
 createdb:
