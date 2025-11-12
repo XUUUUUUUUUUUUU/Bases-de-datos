@@ -16,10 +16,10 @@ PG_DUMP := pg_dump
 PG_RESTORE := pg_restore
 
 # recompile if these headers changes
-HEADERS = ../odbc.h bpass.h lmenu.h search.h windows.h loop.h
+HEADERS = odbc.h bpass.h lmenu.h search.h windows.h loop.h
 
 EXE = menu
-OBJ = $(EXE).o bpass.o loop.o search.o windows.o ../odbc.o
+OBJ = $(EXE).o bpass.o loop.o search.o windows.o odbc.o
 
 .PHONY: all clean run valgrind compile createdb dropdb dump restore psql shell
 
@@ -37,12 +37,12 @@ dropdb:
 	@rm -f *.log
 
 dump:
-	@echo "creando dumpfile ../$(DBNAME).sql"
-	@$(PG_DUMP) $(DBNAME) > ../$(DBNAME).sql
+	@echo "creando dumpfile $(DBNAME).sql"
+	@$(PG_DUMP) $(DBNAME) > $(DBNAME).sql
 
 restore:
 	@echo "restore data base $(DBNAME)"
-	@cat ../$(DBNAME).sql | $(PSQL) $(DBNAME)
+	@cat $(DBNAME).sql | $(PSQL) $(DBNAME)
 
 psql: shell
 
@@ -61,7 +61,7 @@ $(EXE): $(OBJ)
 	$(CC) $(CFLAGS) -o $(EXE) $(OBJ) $(LDLIBS)
 
 clean:
-	@rm -f *.o ../odbc.o core $(EXE)
+	@rm -f *.o core $(EXE)
 
 run:
 	./$(EXE)
