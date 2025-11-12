@@ -54,7 +54,7 @@ void loop(_Windows *windows, _Menus *menus,
     int focus = FOCUS_LEFT;       /* focus is in win_form/win_out window */
     int ch = 0;                   /* typed character */
     bool enterKey = FALSE;        /* has enter been presswed ? */
-    char buffer[1024];             /* auxiliary buffer to compose messages */
+    char buffer[1024];            /* auxiliary buffer to compose messages */
     ITEM *auxItem = (ITEM *)NULL; /* item selected in the menu */
     int choice = -1;              /* index of the item selected in menu*/
     MENU *menu = NULL;            /* pointer to menu in menu_win*/
@@ -63,18 +63,18 @@ void loop(_Windows *windows, _Menus *menus,
     WINDOW *msg_win = NULL;       /* pointer to msg_win */
     char *tmpStr1 = NULL;         /* used to read values typed in forms */
     char *tmpStr2 = NULL;         /* used to read values typed in forms */
-    char * tmpStr3= NULL;
-    int n_out_choices = 0;        /* number of printed lines in win_out window */
-    int out_highlight = 0;        /* line highlighted in win_out window */
-    int rows_out_window = 0;      /* size of win_out window */
-    int i = 0;                    /* dummy variable for loops */
-    int page = 0;                 /* variable to control pagination of out_windows*/
-    int page_size;                /* size of each pagination of out_windows */
-    int page_start;               /* offset of menu choices, arriving the start of the page */
-    int page_element;             /* number of elements in the current page*/
-    int max_page;                 /* max number of page can have*/
-    int page_hl;                  /* the row which to higlight in the page*/
-    char *detail_len;             /* the position of separator beetween mesage of out windows and msg of result_search*/
+    char *tmpStr3 = NULL;
+    int n_out_choices = 0;   /* number of printed lines in win_out window */
+    int out_highlight = 0;   /* line highlighted in win_out window */
+    int rows_out_window = 0; /* size of win_out window */
+    int i = 0;               /* dummy variable for loops */
+    int page = 0;            /* variable to control pagination of out_windows*/
+    int page_size;           /* size of each pagination of out_windows */
+    int page_start;          /* offset of menu choices, arriving the start of the page */
+    int page_element;        /* number of elements in the current page*/
+    int max_page;            /* max number of page can have*/
+    int page_hl;             /* the row which to higlight in the page*/
+    char *detail_len;        /* the position of separator beetween mesage of out windows and msg of result_search*/
 
     (void)curs_set(1); /* show cursor */
     menu = menus->menu;
@@ -82,10 +82,18 @@ void loop(_Windows *windows, _Menus *menus,
     out_win = windows->out_win;
     msg_win = windows->msg_win;
     rows_out_window = windows->terminal_nrows - 2 * windows->height_menu_win - 1;
-    page_size = windows->rows_out_win-2;
 
+    page_size = windows->rows_out_win - 2;
+    if (page_size < 1)
+        page_size = 1;
     while ((bool)TRUE)
     {
+        max_page = (n_out_choices + page_size - 1) / page_size;
+        if (page >= max_page)
+            page = (max_page > 0) ? max_page - 1 : 0;
+        if (out_highlight >= n_out_choices)
+            out_highlight = n_out_choices > 0 ? n_out_choices - 1 : 0;
+
         ch = getch(); /* get char typed by user */
         if ((bool)DEBUG)
         {
@@ -160,7 +168,7 @@ void loop(_Windows *windows, _Menus *menus,
             }
             break;
         case KEY_DOWN:
-        /*case 0x2D:*/ /* - */
+            /*case 0x2D:*/ /* - */
             if (item_index(auxItem) == SEARCH && focus == FOCUS_LEFT)
             {
                 (void)form_driver(forms->search_form, REQ_NEXT_FIELD);
@@ -175,6 +183,7 @@ void loop(_Windows *windows, _Menus *menus,
             }
             else if (focus == FOCUS_RIGHT)
             {
+
                 if (out_highlight + 1 < n_out_choices)
                     out_highlight++;
                 if (out_highlight >= (page + 1) * page_size)
@@ -289,8 +298,8 @@ void loop(_Windows *windows, _Menus *menus,
                 tmpStr1 = field_buffer((forms->search_form_items)[1], 0);
                 tmpStr2 = field_buffer((forms->search_form_items)[3], 0);
                 tmpStr3 = field_buffer((forms->search_form_items)[5], 0);
-                results_search(tmpStr1, tmpStr2, tmpStr3,&n_out_choices, &(menus->out_win_choices),
-                               OUT_LINE_CAP-1, MAX_N_CHOICES);
+                results_search(tmpStr1, tmpStr2, tmpStr3, &n_out_choices, &(menus->out_win_choices),
+                               OUT_LINE_CAP, MAX_N_CHOICES);
                 out_highlight = 0;
                 page = 0;
                 if (page_size < 1)
@@ -302,23 +311,22 @@ void loop(_Windows *windows, _Menus *menus,
                           page_hl, windows->out_title);
                 if ((bool)DEBUG)
                 {
-                    if(n_out_choices==1&&(menus->out_win_choices[0][0]='\t'))
+                    if (n_out_choices == 1 && (menus->out_win_choices[0][0] == '\t'))
                     {
-                        (void)snprintf(buffer, 1024, "%s", menus->out_win_choices[0]+1);
+                        (void)snprintf(buffer, 1024, "%s", menus->out_win_choices[0] + 1);
                         write_msg(msg_win, buffer, -1, -1, windows->msg_title);
                     }
-                    else{
-                        (void)snprintf(buffer, 1024, "From= %s, To= %s, Date= %s", tmpStr1, tmpStr2,tmpStr3);
+                    else
+                    {
+                        (void)snprintf(buffer, 1024, "From= %s, To= %s, Date= %s", tmpStr1, tmpStr2, tmpStr3);
                         write_msg(msg_win, buffer, -1, -1, windows->msg_title);
                     }
-                    
-
                 }
             }
             else if ((choice == SEARCH) && (focus == FOCUS_RIGHT))
             {
-                detail_len=strchr(menus->out_win_choices[out_highlight],'\t');
-                (void)snprintf(buffer, 1024, "msg=%s ", (char*)(detail_len+1));
+                detail_len = strchr(menus->out_win_choices[out_highlight], '\t');
+                (void)snprintf(buffer, 1024, "msg=%s ", (char *)(detail_len + 1));
                 write_msg(msg_win, buffer,
                           -1, -1, windows->msg_title);
             }
@@ -331,7 +339,7 @@ void loop(_Windows *windows, _Menus *menus,
                 (void)form_driver(forms->bpass_form, REQ_VALIDATION);
                 tmpStr1 = field_buffer((forms->bpass_form_items)[1], 0);
                 results_bpass(tmpStr1, &n_out_choices, &(menus->out_win_choices),
-                              OUT_LINE_CAP-1, MAX_N_CHOICES);
+                              OUT_LINE_CAP, MAX_N_CHOICES);
                 out_highlight = 0;
                 page = 0;
                 if (page_size < 1)

@@ -157,9 +157,9 @@ static void create_out(_Windows *windows, _Menus *menu)
                                      windows->out_title);
 
     menu->out_win_choices =
-            (char **) calloc(windows->rows_out_win, sizeof(char *));
+            (char **) calloc(MAX_N_CHOICES, sizeof(char*));
 
-    for (i = 0; i < windows->rows_out_win; i++)
+    for (i = 0; i < MAX_N_CHOICES; i++)
         (menu->out_win_choices)[i] =
                 (char *) calloc(OUT_LINE_CAP, sizeof(char));
 }

@@ -1,5 +1,5 @@
 CC = gcc -g
-CFLAGS = -Wall -Wextra -pedantic -ansi
+CFLAGS = -Wall -Wextra -pedantic -std=c99
 LDLIBS = -lodbc -lcurses -lpanel -lmenu -lform
 
 export PGDATABASE := flight
@@ -21,11 +21,11 @@ HEADERS = ../odbc.h bpass.h lmenu.h search.h windows.h loop.h
 EXE = menu
 OBJ = $(EXE).o bpass.o loop.o search.o windows.o ../odbc.o
 
-.PHONY: all clean run valgrind test01 createdb dropdb dump restore psql shell
+.PHONY: all clean run valgrind compile createdb dropdb dump restore psql shell
 
-all: $(EXE)
+compile: $(EXE)
 
-test01: dropdb createdb restore shell
+all: dropdb createdb restore 
 
 createdb:
 	@echo "Creando BBDD $(DBNAME)"
