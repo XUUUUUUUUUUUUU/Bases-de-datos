@@ -3,7 +3,7 @@
 # add test. Does not check 
 # the index or the reuse of deleted registers
 # first test
-set timeout -1
+set timeout 1
 set filename "test"
 set programName "./library"
 
