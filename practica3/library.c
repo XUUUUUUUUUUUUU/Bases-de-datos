@@ -125,6 +125,7 @@ int main(int argc, char *argv[])
     char *token;
     char mem_mode[MAX_STRING + 1]; /* memory allocation strategy */
     char filename[MAX_STRING + 1]; /* filename of information to stored */
+    char db_filename[MAX_STRING+4];/* filename of information to stored end with .db*/
     size_t i;
 
     if (argc < 3)
@@ -144,12 +145,13 @@ int main(int argc, char *argv[])
     }
 
     strcpy(filename, argv[2]);
+    sprintf(db_filename,"%s.db",filename);
 
     fprintf(stdout, "Type command and arguments/s.\n");
     fprintf(stdout, "exit\n");
 
     /* Open the file with we are going to store book information*/
-    pfile = fopen(filename, "wb");
+    pfile = fopen(db_filename, "wb");
     registro = malloc(sizeof(Record));
     arr=malloc(sizeof(Array));
     initArray(arr, 5);
