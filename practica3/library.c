@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
 
     while (fgets(command, MAX_COMMAND, stdin) && (strcmp(command, "exit\n") != 0))
     {
-        command[strlen(command)-1]=' ';
+        command[strcspn(command, "\n")]=0;
         token = strtok(command, " ");
         if (strcmp(token, "add") == 0)
         {
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
             /* read the isbn */
             token = strtok(NULL, "|");
             strncpy(registro->isbn, token, ISBN);
-            registro->printedBy[ISBN] = '\0';
+            registro->isbn[ISBN] = '\0';
 
             /* read the title */
             token = strtok(NULL, "|");
@@ -202,12 +202,12 @@ int main(int argc, char *argv[])
             registro->title[MAX_STRING] = '\0';
 
             /* read the printedBy (editorial) */
-            token = strtok(NULL, "\r");
+            token = strtok(NULL, "\r\n");
             strncpy(registro->printedBy, token, MAX_STRING);
             registro->printedBy[MAX_STRING] = '\0';
 
             /* total size of register */
-            registro->size = sizeof(registro->book_id) + sizeof(registro->isbn) + strlen(registro->title) + strlen(registro->printedBy)-1;
+            registro->size = sizeof(registro->book_id) + strlen(registro->isbn) + strlen(registro->title) + strlen(registro->printedBy)+sizeof(char);
 
             book_to_file(pfile, registro);
 
