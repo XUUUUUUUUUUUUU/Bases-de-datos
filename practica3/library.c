@@ -41,14 +41,14 @@ void initArray(Array *a, size_t initialSize)
     a->size = initialSize;
 }
 
-void insertArray(Array *a, Indexbook *element)
+void insertArray(Array *a, Indexbook *ind)
 {
     if (a->used == a->size)
     {
         a->size *= 2;
         a->array = (Indexbook **)realloc(a->array, a->size * sizeof(Indexbook *));
     }
-    a->array[a->used++] = element;
+    a->array[a->used++] = ind;
 }
 
 void freeArray(Array *a)
@@ -114,6 +114,55 @@ short book_to_file(FILE *pfile, Record *registro)
     return OK;
 }
 
+/**
+ * @brief index_to_file print book'index in the given file using binary mode
+ * @author Shaofan Xu
+ * @date 23/11/2025
+ *
+ * @param pfile pointer to the file to print: NOT NULL
+ * @param ind_arr pointer to the arr of index of book: NOT NULL
+ *
+ * @return OK if everythings is ok, and error in other case
+ */
+short index_to_file(FILE *pfile, Array *ind_arr)
+{
+    Indexbook *ind;
+    int *print_order;
+    size_t i;
+    int k;
+    if (pfile == NULL || ind_arr == NULL)
+    {
+        return ERR;
+    }
+    print_order=malloc(sizeof(print_order[0])*ind_arr->used);
+    for(i=0;i<ind_arr->used;i++)
+    {
+        print_order[i]=i+1;
+    }
+    for(i=1;i<ind_arr->used;i++)
+    {
+        k=i-1;
+        while(k>=0&&(ind_arr->array[k]->key>ind_arr->array[i]->key))
+        {
+            print_order[k+1]=print_order[k];
+            k--;
+        }
+        print_order[k+1]=i;
+    }
+    for (i = 0; i < ind_arr->used; i++)
+    {
+        ind = ind_arr->array[print_order[i]];
+        if (fwrite(&(ind->key), sizeof(ind->key), 1, pfile) != 1)
+            return ERR;
+        if (fwrite(&(ind->offset), sizeof(ind->offset), 1, pfile) != 1)
+            return ERR;
+        if (fwrite(&(ind->size), sizeof(ind->size), 1, pfile) != 1)
+            return ERR;
+            
+    }
+    return OK;
+}
+
 int main(int argc, char *argv[])
 {
     FILE *pfile = NULL;
@@ -123,9 +172,10 @@ int main(int argc, char *argv[])
     long int offset;
     char command[MAX_COMMAND + 1];
     char *token;
-    char mem_mode[MAX_STRING + 1]; /* memory allocation strategy */
-    char filename[MAX_STRING + 1]; /* filename of information to stored */
-    char db_filename[MAX_STRING+4];/* filename of information to stored end with .db*/
+    char mem_mode[MAX_STRING + 1];     /* memory allocation strategy */
+    char filename[MAX_STRING + 1];     /* filename of book's information to stored */
+    char db_filename[MAX_STRING + 4];  /* filename of book's information to stored end with .db*/
+    char ind_filename[MAX_STRING + 5]; /* filename of index information to stored end with .ind */
     size_t i;
 
     if (argc < 3)
@@ -145,7 +195,8 @@ int main(int argc, char *argv[])
     }
 
     strcpy(filename, argv[2]);
-    sprintf(db_filename,"%s.db",filename);
+    sprintf(db_filename, "%s.db", filename);
+    sprintf(ind_filename, "%s.ind", filename);
 
     fprintf(stdout, "Type command and arguments/s.\n");
     fprintf(stdout, "exit\n");
@@ -153,9 +204,9 @@ int main(int argc, char *argv[])
     /* Open the file with we are going to store book information*/
     pfile = fopen(db_filename, "wb");
     registro = malloc(sizeof(Record));
-    arr=malloc(sizeof(Array));
+    arr = malloc(sizeof(Array));
     initArray(arr, 5);
-    offset=0;
+    offset = 0;
     if (pfile == NULL)
     {
         free(registro);
@@ -175,7 +226,7 @@ int main(int argc, char *argv[])
 
     while (fgets(command, MAX_COMMAND, stdin) && (strcmp(command, "exit\n") != 0))
     {
-        command[strcspn(command, "\n")]=0;
+        command[strcspn(command, "\n")] = 0;
         token = strtok(command, " ");
         if (strcmp(token, "add") == 0)
         {
@@ -209,18 +260,18 @@ int main(int argc, char *argv[])
             registro->printedBy[MAX_STRING] = '\0';
 
             /* total size of register */
-            registro->size = sizeof(registro->book_id) + strlen(registro->isbn) + strlen(registro->title) + strlen(registro->printedBy)+sizeof(char);
+            registro->size = sizeof(registro->book_id) + strlen(registro->isbn) + strlen(registro->title) + strlen(registro->printedBy) + sizeof(char);
 
             book_to_file(pfile, registro);
 
             /* values for ind */
             ind->key = registro->book_id;
-            ind->offset =offset;
+            ind->offset = offset;
             ind->size = registro->size;
-            offset=ftell(pfile);
+            offset = ftell(pfile);
 
             /*insert ind to arr*/
-            insertArray(arr,ind);
+            insertArray(arr, ind);
 
             fprintf(stdout, "Record with BookID=%d has been added to the database\n", registro->book_id);
             fprintf(stdout, "exit\n");
@@ -238,8 +289,26 @@ int main(int argc, char *argv[])
         }
     }
 
-    free(registro);
+    /* Start print in the index file*/
     fclose(pfile);
+    pfile = fopen(ind_filename, "wb");
+    if (pfile == NULL)
+    {
+        free(registro);
+        freeArray(arr);
+        free(arr);
+        return ERR;
+    }
+    if(index_to_file(pfile,arr)==ERR)
+    {
+        fclose(pfile);
+        free(registro);
+        freeArray(arr);
+        free(arr);
+        return ERR;
+    }
+    fclose(pfile);
+    free(registro);
     freeArray(arr);
     free(arr);
     return 0;
