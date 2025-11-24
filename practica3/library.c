@@ -70,6 +70,7 @@ void freeArray(Array *a)
     }
     a->array = NULL;
     a->used = a->size = 0;
+    free(a);
 }
 
 /**
@@ -163,6 +164,65 @@ short index_to_file(FILE *pfile, Array *ind_arr)
     return OK;
 }
 
+
+/**
+ * @brief reload_index reloads book'index in the given file using binary mode
+ * @author Alejandro Zheng
+ * @date 24/11/2025
+ *
+ * @param pfile pointer to the file to load index: NOT NULL
+ * @param ind pointer to the arry of Indexbook to save index from file
+ *
+ * @return OK if everythings is ok, and error in other case
+ */
+short reload_index(FILE *pfile, Array * ind_arr)
+{
+    Indexbook *ind_temp;
+
+    /*the file or index structure is NULL*/
+    if (pfile == NULL || ind_arr == NULL)
+    {
+        return ERR;
+    }
+
+    /*process of loading index*/
+    while(1)
+    {
+        /*Allocate memory for index*/
+        ind_temp = malloc(sizeof(Indexbook));
+        if (ind_temp == NULL)
+        {
+            return ERR;
+        }
+
+        /*loading data*/
+        if (fread(&(ind_temp->key), sizeof(ind_temp->key), 1, pfile) != 1)
+        {
+            free(ind_temp);
+            /*the loop end when the file have not index to load*/
+            break;
+        }
+
+        if (fread(&(ind_temp->offset), sizeof(ind_temp->offset), 1, pfile) != 1)
+        {
+            free(ind_temp);
+            return ERR;
+        }
+
+        if (fread(&(ind_temp->size), sizeof(ind_temp->size), 1, pfile) != 1)
+        {
+            free(ind_temp);
+            return ERR;
+        }
+
+        /*Add index to the array of Indexbook*/
+        InsertArray(ind_arr, ind_temp);
+    }
+
+    return OK;
+
+}
+
 int main(int argc, char *argv[])
 {
     FILE *pfile = NULL;
@@ -198,29 +258,49 @@ int main(int argc, char *argv[])
     sprintf(db_filename, "%s.db", filename);
     sprintf(ind_filename, "%s.ind", filename);
 
+    /*Iniciate the arry of indexbook*/
+    arr = malloc(sizeof(Array));
+    if (arr == NULL)
+    {
+        return ERR;
+    }
+
+    initArray(arr, 5);
+    offset = 0; /*Esto hay que cambiar ya que los indice debe esta ordenado*/
+
+
+    /*Check if exists file which index information and store them before run programm*/
+    pfile = fopen(ind_filename, "rb");
+    if (pfile != NULL)
+    {
+        /*reloading the index*/
+        if (reload_index(pfile, arr) == ERR)
+        {
+            freeArray(arr);
+            return ERR;
+        }
+
+        /*close the index file*/
+        fclose(pfile);
+    }
+
+
     fprintf(stdout, "Type command and arguments/s.\n");
     fprintf(stdout, "exit\n");
 
     /* Open the file with we are going to store book information*/
     pfile = fopen(db_filename, "wb");
-    registro = malloc(sizeof(Record));
-    arr = malloc(sizeof(Array));
-    initArray(arr, 5);
-    offset = 0;
     if (pfile == NULL)
     {
-        free(registro);
+        freeArray(arr);
         return ERR;
     }
+
+    registro = malloc(sizeof(Record));
     if (registro == NULL)
     {
         fclose(pfile);
-        return ERR;
-    }
-    if (arr == NULL)
-    {
-        fclose(pfile);
-        free(registro);
+        freeArray(arr);
         return ERR;
     }
 
@@ -230,13 +310,13 @@ int main(int argc, char *argv[])
         token = strtok(command, " ");
         if (strcmp(token, "add") == 0)
         {
-            /* allocate memory*/
+            /* allocate memory of indexbook*/
             ind = malloc(sizeof(Indexbook));
             if (ind == NULL)
             {
                 fclose(pfile);
-                free(registro);
                 freeArray(arr);
+                free(registro);
                 return ERR;
             }
 
@@ -275,7 +355,7 @@ int main(int argc, char *argv[])
 
             fprintf(stdout, "Record with BookID=%d has been added to the database\n", registro->book_id);
             fprintf(stdout, "exit\n");
-        }
+        } 
         else if (strcmp(token, "printInd") == 0)
         {
             for (i = 0; i < arr->used; i++)
@@ -296,7 +376,6 @@ int main(int argc, char *argv[])
     {
         free(registro);
         freeArray(arr);
-        free(arr);
         return ERR;
     }
     if(index_to_file(pfile,arr)==ERR)
@@ -304,12 +383,10 @@ int main(int argc, char *argv[])
         fclose(pfile);
         free(registro);
         freeArray(arr);
-        free(arr);
         return ERR;
     }
     fclose(pfile);
     free(registro);
     freeArray(arr);
-    free(arr);
     return 0;
 }
