@@ -130,7 +130,7 @@ short index_to_file(FILE *pfile, Array *ind_arr)
     Indexbook *ind;
     int *print_order;
     size_t i;
-    int k;
+    int k,temp_index;
     if (pfile == NULL || ind_arr == NULL)
     {
         return ERR;
@@ -138,17 +138,18 @@ short index_to_file(FILE *pfile, Array *ind_arr)
     print_order=malloc(sizeof(print_order[0])*ind_arr->used);
     for(i=0;i<ind_arr->used;i++)
     {
-        print_order[i]=i+1;
+        print_order[i]=i;
     }
     for(i=1;i<ind_arr->used;i++)
     {
         k=i-1;
-        while(k>=0&&(ind_arr->array[k]->key>ind_arr->array[i]->key))
+        temp_index=print_order[i];
+        while(k>=0&&(ind_arr->array[print_order[k]]->key>ind_arr->array[temp_index]->key))
         {
             print_order[k+1]=print_order[k];
             k--;
         }
-        print_order[k+1]=i;
+        print_order[k+1]=temp_index;
     }
     for (i = 0; i < ind_arr->used; i++)
     {
@@ -161,6 +162,7 @@ short index_to_file(FILE *pfile, Array *ind_arr)
             return ERR;
             
     }
+    free(print_order);
     return OK;
 }
 
@@ -216,7 +218,7 @@ short reload_index(FILE *pfile, Array * ind_arr)
         }
 
         /*Add index to the array of Indexbook*/
-        InsertArray(ind_arr, ind_temp);
+        insertArray(ind_arr, ind_temp);
     }
 
     return OK;
