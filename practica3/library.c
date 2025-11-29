@@ -237,8 +237,8 @@ int main(int argc, char *argv[])
 
     if (argc < 3)
     {
-        fprintf(stderr, "Missing argument\n");
-        return ERR;
+        fprintf(stdout, "Missing argument");
+        return 0;
     }
 
     if (strcmp(argv[1], "first_fit") == 0 || strcmp(argv[1], "last_fit") == 0 || strcmp(argv[1], "best_fit") == 0)
@@ -247,8 +247,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        fprintf(stderr, "Unknown search strategy unknown_search_strategy\n");
-        return ERR;
+        fprintf(stdout, "Unknown search strategy unknown_search_strategy");
+        return 0;
     }
 
     strcpy(filename, argv[2]);
