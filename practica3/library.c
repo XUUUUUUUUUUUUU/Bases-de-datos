@@ -33,6 +33,11 @@ typedef struct
 } Array;
 
 /* auxiliar functions */
+int binary_search(Array *arr)
+{
+    if (arr == NULL || arr->array == NULL)
+        return ERR;
+}
 
 void initArray(Array *a, size_t initialSize)
 {
@@ -43,24 +48,33 @@ void initArray(Array *a, size_t initialSize)
 
 void insertArray(Array *a, Indexbook *ind)
 {
+    int i;
     if (a->used == a->size)
     {
         a->size *= 2;
         a->array = (Indexbook **)realloc(a->array, a->size * sizeof(Indexbook *));
     }
-    a->array[a->used++] = ind;
+    i = a->used - 1;
+    while (i >= 0 && a->array[i]->key > ind->key)
+    {
+        a->array[i + 1] = a->array[i];
+        i--;
+    }
+
+    a->array[i + 1] = ind;
+    a->used++;
 }
 
 void freeArray(Array *a)
 {
     size_t i;
-    if (a)
+    if (a != NULL)
     {
-        if (a->array)
+        if (a->array != NULL)
         {
-            for (i = 0; i < a->size; i++)
+            for (i = 0; i < a->used; i++)
             {
-                if (a->array[i])
+                if (a->array[i] != NULL)
                 {
                     free(a->array[i]);
                 }
@@ -128,44 +142,23 @@ short book_to_file(FILE *pfile, Record *registro)
 short index_to_file(FILE *pfile, Array *ind_arr)
 {
     Indexbook *ind;
-    int *print_order;
     size_t i;
-    int k,temp_index;
     if (pfile == NULL || ind_arr == NULL)
     {
         return ERR;
     }
-    print_order=malloc(sizeof(print_order[0])*ind_arr->used);
-    for(i=0;i<ind_arr->used;i++)
-    {
-        print_order[i]=i;
-    }
-    for(i=1;i<ind_arr->used;i++)
-    {
-        k=i-1;
-        temp_index=print_order[i];
-        while(k>=0&&(ind_arr->array[print_order[k]]->key>ind_arr->array[temp_index]->key))
-        {
-            print_order[k+1]=print_order[k];
-            k--;
-        }
-        print_order[k+1]=temp_index;
-    }
     for (i = 0; i < ind_arr->used; i++)
     {
-        ind = ind_arr->array[print_order[i]];
+        ind = ind_arr->array[i];
         if (fwrite(&(ind->key), sizeof(ind->key), 1, pfile) != 1)
             return ERR;
         if (fwrite(&(ind->offset), sizeof(ind->offset), 1, pfile) != 1)
             return ERR;
         if (fwrite(&(ind->size), sizeof(ind->size), 1, pfile) != 1)
             return ERR;
-            
     }
-    free(print_order);
     return OK;
 }
-
 
 /**
  * @brief reload_index reloads book'index in the given file using binary mode
@@ -177,7 +170,7 @@ short index_to_file(FILE *pfile, Array *ind_arr)
  *
  * @return OK if everythings is ok, and error in other case
  */
-short reload_index(FILE *pfile, Array * ind_arr)
+short reload_index(FILE *pfile, Array *ind_arr)
 {
     Indexbook *ind_temp;
 
@@ -188,7 +181,7 @@ short reload_index(FILE *pfile, Array * ind_arr)
     }
 
     /*process of loading index*/
-    while(1)
+    while (1)
     {
         /*Allocate memory for index*/
         ind_temp = malloc(sizeof(Indexbook));
@@ -222,7 +215,6 @@ short reload_index(FILE *pfile, Array * ind_arr)
     }
 
     return OK;
-
 }
 
 int main(int argc, char *argv[])
@@ -231,7 +223,10 @@ int main(int argc, char *argv[])
     Record *registro;
     Array *arr = NULL;
     Indexbook *ind = NULL;
+    size_t *printIndOrder = NULL;
+    int temp_index;
     long int offset;
+    int k;
     char command[MAX_COMMAND + 1];
     char *token;
     char mem_mode[MAX_STRING + 1];     /* memory allocation strategy */
@@ -270,7 +265,6 @@ int main(int argc, char *argv[])
     initArray(arr, 5);
     offset = 0; /*Esto hay que cambiar ya que los indice debe esta ordenado*/
 
-
     /*Check if exists file which index information and store them before run programm*/
     pfile = fopen(ind_filename, "rb");
     if (pfile != NULL)
@@ -285,7 +279,6 @@ int main(int argc, char *argv[])
         /*close the index file*/
         fclose(pfile);
     }
-
 
     fprintf(stdout, "Type command and arguments/s.\n");
     fprintf(stdout, "exit\n");
@@ -357,16 +350,38 @@ int main(int argc, char *argv[])
 
             fprintf(stdout, "Record with BookID=%d has been added to the database\n", registro->book_id);
             fprintf(stdout, "exit\n");
-        } 
+        }
         else if (strcmp(token, "printInd") == 0)
         {
+            printIndOrder = malloc(sizeof(printIndOrder[0])*arr->used);
+            if (printIndOrder == NULL)
+            {
+                fclose(pfile);
+                free(registro);
+                freeArray(arr);
+            }
+            for (i = 0; i < arr->used; i++)
+            {
+                printIndOrder[i] = i;
+            }
+            for (i = 1; i < arr->used; i++)
+            {
+                k = i - 1;
+                temp_index = printIndOrder[i];
+                while (k >= 0 && (arr->array[printIndOrder[k]]->offset > arr->array[temp_index]->offset))
+                {
+                    printIndOrder[k + 1] = printIndOrder[k];
+                    k--;
+                }
+                printIndOrder[k + 1] = temp_index;
+            }
             for (i = 0; i < arr->used; i++)
             {
                 fprintf(stdout, "Entry #%ld\n", i);
-                fprintf(stdout, "    key: #%d\n", arr->array[i]->key);
-                fprintf(stdout, "    offset: #%ld\n", arr->array[i]->offset);
-            }
-
+                fprintf(stdout, "    key: #%d\n", arr->array[printIndOrder[i]]->key);
+                fprintf(stdout, "    offset: #%ld\n", arr->array[printIndOrder[i]]->offset);
+            }   
+            free(printIndOrder);
             fprintf(stdout, "exit\n");
         }
     }
@@ -380,7 +395,7 @@ int main(int argc, char *argv[])
         freeArray(arr);
         return ERR;
     }
-    if(index_to_file(pfile,arr)==ERR)
+    if (index_to_file(pfile, arr) == ERR)
     {
         fclose(pfile);
         free(registro);
