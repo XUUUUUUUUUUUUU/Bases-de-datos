@@ -94,9 +94,11 @@ void initArray(Array *a, size_t initialSize)
     a->size = initialSize;
 }
 
-void insertArray(Array *a, Indexbook *ind)
+short insertArray(Array *a, Indexbook *ind)
 {
-    int i;
+    int i, k;
+    size_t size;
+    Index_deleted_book *ind_del;
     if (a->used == a->size)
     {
         a->size *= 2;
@@ -111,6 +113,7 @@ void insertArray(Array *a, Indexbook *ind)
 
     a->array[i + 1] = ind;
     a->used++;
+    return OK;
 }
 
 void initDelArray(Del_Array *a, size_t initialSize)
@@ -379,6 +382,70 @@ void remove_from_index(Array *arr, int pos)
         arr->array[i] = arr->array[i + 1];
     }
     arr->used--;
+}
+
+/**
+ * @brief Finds a hole based on strategy, updates del_arr, and returns the offset to use.
+ * @return valid offset if found, -1 if no hole found.
+ */
+long find_and_use_hole(Del_Array *del_arr, size_t required_size, int strategy)
+{
+    int i, best_index = -1;
+    size_t min_diff = -1; // Max value equivalent
+    size_t max_diff = 0;
+    
+    if (del_arr == NULL || del_arr->used == 0) return -1;
+
+    /* 1. Find the index based on strategy */
+    for (i = 0; i < del_arr->used; i++)
+    {
+        if (del_arr->array[i]->register_size >= required_size)
+        {
+            size_t diff = del_arr->array[i]->register_size - required_size;
+
+            if (strategy == FIRSTFIT) {
+                best_index = i;
+                break; 
+            }
+            else if (strategy == BESTFIT) {
+                best_index = i;
+                break;
+            }
+            else if (strategy == WORSTFIT) {
+                if (diff >= max_diff) {
+                    max_diff = diff;
+                    best_index = i;
+                }
+            }
+        }
+    }
+
+    if (best_index == -1) return -1; // No suitable hole found
+
+    /* 2. Extract info */
+    Index_deleted_book *hole = del_arr->array[best_index];
+    long use_offset = hole->offset;
+    size_t hole_size = hole->register_size;
+
+    /* 3. Handle remaining space (Fragmentation) */
+    size_t remaining = hole_size - required_size;
+    
+    /* Remove the used hole from the array (Shift left) */
+    free(hole);
+    for (int k = best_index; k < del_arr->used - 1; k++) {
+        del_arr->array[k] = del_arr->array[k + 1];
+    }
+    del_arr->used--;
+
+    /* If there is remaining space, add it back as a new hole */
+    if (remaining > 0) {
+        Index_deleted_book *new_hole = malloc(sizeof(Index_deleted_book));
+        new_hole->offset = use_offset + required_size;
+        new_hole->register_size = remaining;
+        insertDelArray(del_arr, new_hole, strategy);
+    }
+
+    return use_offset;
 }
 
 int main(int argc, char *argv[])
