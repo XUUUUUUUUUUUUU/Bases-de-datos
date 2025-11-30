@@ -120,7 +120,7 @@ void initDelArray(Del_Array *a, size_t initialSize)
     a->size = initialSize;
 }
 
-void insertDelArray(Del_Array *a, Index_deleted_book *ind_del)
+void insertDelArray(Del_Array *a, Index_deleted_book *ind_del, int strategy)
 {
     int i;
     if (a->used == a->size)
@@ -129,7 +129,22 @@ void insertDelArray(Del_Array *a, Index_deleted_book *ind_del)
         a->array = (Index_deleted_book **)realloc(a->array, a->size * sizeof(Index_deleted_book *));
     }
     i = a->used - 1;
-
+    if (strategy == BESTFIT)
+    {
+        while (i >= 0 && a->array[i]->register_size > ind_del->register_size)
+        {
+            a->array[i + 1] = a->array[i];
+            i--;
+        }
+    }
+    else if (strategy == WORSTFIT)
+    {
+        while (i >= 0 && a->array[i]->register_size < ind_del->register_size)
+        {
+            a->array[i + 1] = a->array[i];
+            i--;
+        }
+    }
     a->array[i + 1] = ind_del;
     a->used++;
 }
@@ -258,10 +273,11 @@ short index_to_file(FILE *pfile, Array *ind_arr)
  *
  * @param pfile_del pointer to the file to print: NOT NULL
  * @param ind_del_arr pointer to the arr of deleted book's index: NOT NULL
+ * @param strategy strategy used to reuse the deleted book space
  *
  * @return OK if everythings is ok, and error in other case
  */
-short index_del_to_file(FILE *pfile_del, Del_Array *ind_del_arr)
+short index_del_to_file(FILE *pfile_del, Del_Array *ind_del_arr, int strategy)
 {
     Index_deleted_book *ind_del;
     size_t i;
@@ -269,6 +285,8 @@ short index_del_to_file(FILE *pfile_del, Del_Array *ind_del_arr)
     {
         return ERR;
     }
+    if (fwrite(&(strategy), sizeof(strategy), 1, pfile_del) != 1)
+        return ERR;
     for (i = 0; i < ind_del_arr->used; i++)
     {
         ind_del = ind_del_arr->array[i];
@@ -376,7 +394,7 @@ int main(int argc, char *argv[])
     long int offset;
     char command[MAX_COMMAND + 1];
     char *token;
-    char mem_mode[MAX_STRING + 1];         /* memory allocation strategy */
+    int strategy;                          /* strategy to reuse the space of deleted book */
     char filename[MAX_STRING + 1];         /* filename of book's information to stored */
     char db_filename[MAX_STRING + 4];      /* filename of book's information to stored end with .db*/
     char ind_filename[MAX_STRING + 5];     /* filename of index information to stored end with .ind */
@@ -389,9 +407,17 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if (strcmp(argv[1], "first_fit") == 0 || strcmp(argv[1], "last_fit") == 0 || strcmp(argv[1], "best_fit") == 0)
+    if (strcmp(argv[1], "first_fit") == 0)
     {
-        strcpy(mem_mode, argv[1]);
+        strategy = FIRSTFIT;
+    }
+    else if (strcmp(argv[1], "worst_fit") == 0)
+    {
+        strategy = WORSTFIT;
+    }
+    else if (strcmp(argv[1], "best_fit") == 0)
+    {
+        strategy = BESTFIT;
     }
     else
     {
@@ -569,10 +595,20 @@ int main(int argc, char *argv[])
                 ind_del = malloc(sizeof(Index_deleted_book));
                 ind_del->register_size = ind_arr->array[result_bsc]->size;
                 ind_del->offset = ind_arr->array[result_bsc]->offset;
-                insertDelArray(ind_del_arr,ind_del);
+                insertDelArray(ind_del_arr, ind_del, strategy);
                 remove_from_index(ind_arr, result_bsc);
-                fprintf(stdout,"Record with BookID=%d has been deleted\n",book_id);
+                fprintf(stdout, "Record with BookID=%d has been deleted\n", book_id);
             }
+        }
+        else if (strcmp(token, "printLst") == 0)
+        {
+            for (i = 0; i < ind_del_arr->used; i++)
+            {
+                fprintf(stdout, "Entry #%ld\n", i);
+                fprintf(stdout, "    offset: #%ld\n", ind_del_arr->array[i]->offset);
+                fprintf(stdout, "    size: #%ld\n", ind_del_arr->array[i]->register_size);
+            }
+            fprintf(stdout, "exit\n");
         }
     }
 
@@ -595,7 +631,9 @@ int main(int argc, char *argv[])
         freeDelArray(ind_del_arr);
         return ERR;
     }
-    index_del_to_file(pfile_del, ind_del_arr);
+    /* finished */
+    fprintf(stdout, "all done\n");
+    index_del_to_file(pfile_del, ind_del_arr, strategy);
     fclose(pfile);
     fclose(pfile_del);
     free(registro);

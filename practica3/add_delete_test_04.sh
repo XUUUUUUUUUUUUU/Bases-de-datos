@@ -4,7 +4,7 @@
 # b) check that list of deleted books is created
 ##     and file with list is saved
 # b.3 worstfit
-set timeout -1
+set timeout 1
 set programName "library"
 set filename "test"
 
