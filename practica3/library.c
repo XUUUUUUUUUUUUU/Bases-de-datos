@@ -66,9 +66,9 @@ int binary_search(Array *arr, int book_id)
     if (arr == NULL || arr->array == NULL || book_id < 0)
         return ERR;
 
-    right = 0;
-    left = arr->used - 1;
-    while (right <= left)
+    left = 0;
+    right = arr->used - 1;
+    while (left <= right)
     {
         mid = (right + left) / 2;
         if (arr->array[mid]->key == book_id)
@@ -77,11 +77,11 @@ int binary_search(Array *arr, int book_id)
         }
         else if (arr->array[mid]->key > book_id)
         {
-            left = mid;
+            right = mid - 1;
         }
         else
         {
-            right = mid;
+            left = mid + 1;
         }
     }
     return NOT_FOUNDED;
@@ -341,20 +341,23 @@ short reload_index(FILE *pfile, Array *ind_arr)
  * @brief remove_from_index delete an index from the index array
  * @date 30/11/2025
  * @author Shaofan Xu
- * 
+ *
  * @param arr pointer to the array of Indexbook: NOT NULL
  * @param pos position of the Indexbook to delete in the array: NOT NEGATIVE
- * 
+ *
  * @return NULL
  */
-void remove_from_index(Array *arr, int pos) {
+void remove_from_index(Array *arr, int pos)
+{
     size_t i;
 
-    if(arr==NULL || arr->array==NULL || pos<0)return;
+    if (arr == NULL || arr->array == NULL || pos < 0)
+        return;
 
     free(arr->array[pos]);
 
-    for (i = pos; i < arr->used - 1; i++) {
+    for (i = pos; i < arr->used - 1; i++)
+    {
         arr->array[i] = arr->array[i + 1];
     }
     arr->used--;
@@ -368,12 +371,9 @@ int main(int argc, char *argv[])
     Del_Array *ind_del_arr = NULL;
     Indexbook *ind = NULL;
     Index_deleted_book *ind_del = NULL;
-    int *printIndOrder = NULL;
-    int temp_index;
     int result_bsc; /*result of binary search */
     int book_id;
     long int offset;
-    int k;
     char command[MAX_COMMAND + 1];
     char *token;
     char mem_mode[MAX_STRING + 1];         /* memory allocation strategy */
@@ -410,7 +410,7 @@ int main(int argc, char *argv[])
     {
         return ERR;
     }
-    ind_del_arr = malloc(sizeof(Array));
+    ind_del_arr = malloc(sizeof(Del_Array));
     if (ind_del_arr == NULL)
     {
         freeArray(ind_arr);
@@ -473,7 +473,7 @@ int main(int argc, char *argv[])
 
     while (fgets(command, MAX_COMMAND, stdin) && (strcmp(command, "exit\n") != 0))
     {
-        command[strcspn(command, "\n")] = 0;
+        command[strcspn(command, "\r\n")] = 0;
         token = strtok(command, " ");
         if (strcmp(token, "add") == 0)
         {
@@ -492,12 +492,14 @@ int main(int argc, char *argv[])
             /* read the book_id */
             token = strtok(NULL, "|");
             registro->book_id = atoi(token);
-
-            if (binary_search(ind_arr, registro->book_id)>=0)
+            if (ind_arr->used > 0)
             {
-                fprintf(stdout, "Record with Book_ID==%d exists\n", registro->book_id);
-                free(ind);
-                continue;
+                if (binary_search(ind_arr, registro->book_id) >= 0)
+                {
+                    fprintf(stdout, "Record with Book_ID==%d exists\n", registro->book_id);
+                    free(ind);
+                    continue;
+                }
             }
             /* read the isbn */
             token = strtok(NULL, "|");
@@ -517,14 +519,7 @@ int main(int argc, char *argv[])
             /* total size of register */
             registro->size = sizeof(registro->book_id) + strlen(registro->isbn) + strlen(registro->title) + strlen(registro->printedBy) + sizeof(char);
 
-            if (book_to_file(pfile, registro) == ERR)
-            {
-                fclose(pfile);
-                fclose(pfile_del);
-                free(registro);
-                freeArray(ind_arr);
-                freeDelArray(ind_del_arr);
-            }
+            book_to_file(pfile, registro);
 
             /* values for ind */
             ind->key = registro->book_id;
@@ -540,36 +535,13 @@ int main(int argc, char *argv[])
         }
         else if (strcmp(token, "printInd") == 0)
         {
-            printIndOrder = malloc(sizeof(printIndOrder[0]) * ind_arr->used);
-            if (printIndOrder == NULL)
-            {
-                fclose(pfile);
-                fclose(pfile_del);
-                free(registro);
-                freeArray(ind_arr);
-            }
             for (i = 0; i < ind_arr->used; i++)
             {
-                printIndOrder[i] = i;
+                fprintf(stdout, "Entry #%ld\n", i);
+                fprintf(stdout, "    key: #%d\n", ind_arr->array[i]->key);
+                fprintf(stdout, "    offset: #%ld\n", ind_arr->array[i]->offset);
+                fprintf(stdout, "    size: #%ld\n", ind_arr->array[i]->size);
             }
-            for (i = 1; i < ind_arr->used; i++)
-            {
-                k = (int)i - 1;
-                temp_index = printIndOrder[i];
-                while (k >= 0 && (ind_arr->array[printIndOrder[k]]->offset > ind_arr->array[temp_index]->offset))
-                {
-                    printIndOrder[k + 1] = printIndOrder[k];
-                    k--;
-                }
-                printIndOrder[k + 1] = temp_index;
-            }
-            for (i = 0; i < ind_arr->used; i++)
-            {
-                fprintf(stdout, "Entry #%lu\n", i);
-                fprintf(stdout, "    key: #%d\n", ind_arr->array[printIndOrder[i]]->key);
-                fprintf(stdout, "    offset: #%ld\n", ind_arr->array[printIndOrder[i]]->offset);
-            }
-            free(printIndOrder);
             fprintf(stdout, "exit\n");
         }
         else if (strcmp(token, "del") == 0)
@@ -590,7 +562,7 @@ int main(int argc, char *argv[])
             }
             else if (result_bsc == NOT_FOUNDED)
             {
-                fprintf(stdout, "Record with bookId=%d does not exist", book_id);
+                fprintf(stdout, "Record with bookId=%d does not exist\n", book_id);
             }
             else
             {
@@ -606,7 +578,8 @@ int main(int argc, char *argv[])
                     free(registro);
                     return ERR;
                 }
-                remove_from_index(ind_arr,result_bsc);
+                remove_from_index(ind_arr, result_bsc);
+                fprintf(stdout,"Record with BookID=%d has been deleted\n",book_id);
             }
         }
     }
