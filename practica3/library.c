@@ -569,15 +569,7 @@ int main(int argc, char *argv[])
                 ind_del = malloc(sizeof(Index_deleted_book));
                 ind_del->register_size = ind_arr->array[result_bsc]->size;
                 ind_del->offset = ind_arr->array[result_bsc]->offset;
-                if (index_del_to_file(pfile_del, ind_del_arr) == ERR)
-                {
-                    fclose(pfile);
-                    fclose(pfile_del);
-                    freeArray(ind_arr);
-                    freeDelArray(ind_del_arr);
-                    free(registro);
-                    return ERR;
-                }
+                insertDelArray(ind_del_arr,ind_del);
                 remove_from_index(ind_arr, result_bsc);
                 fprintf(stdout,"Record with BookID=%d has been deleted\n",book_id);
             }
@@ -603,6 +595,7 @@ int main(int argc, char *argv[])
         freeDelArray(ind_del_arr);
         return ERR;
     }
+    index_del_to_file(pfile_del, ind_del_arr);
     fclose(pfile);
     fclose(pfile_del);
     free(registro);
