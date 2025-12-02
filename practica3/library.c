@@ -543,6 +543,12 @@ int main(int argc, char *argv[])
 
         /*close the index file*/
         fclose(pfile);
+    }else{
+        pfile = fopen(ind_filename,"wb");
+        if(pfile==NULL)
+        {
+            /* pendiente de clen up*/
+        }
     }
 
     fprintf(stdout, "Type command and arguments/s.\n");
@@ -709,7 +715,7 @@ int main(int argc, char *argv[])
 
     /* Start print in the index file*/
     fclose(pfile);
-    pfile = fopen(ind_filename, "wb");
+    pfile = fopen(ind_filename, "rb+");
     if (pfile == NULL)
     {
         fclose(pfile_del);
