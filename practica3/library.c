@@ -386,60 +386,74 @@ void remove_from_index(Array *arr, int pos)
 
 /**
  * @brief Finds a hole based on strategy, updates del_arr, and returns the offset to use.
+ * @date 30/11/2025
+ * @author Shaofan Xu
+ *
+ * @param del_arr pointer to register of deleted books
+ * @param required_size size need to write
+ * @param strategy strategy to use to find the hole
+ *
  * @return valid offset if found, -1 if no hole found.
  */
 long find_and_use_hole(Del_Array *del_arr, size_t required_size, int strategy)
 {
-    int i, best_index = -1;
+    int i, k, best_index = -1;
     size_t min_diff = -1; // Max value equivalent
     size_t max_diff = 0;
-    
-    if (del_arr == NULL || del_arr->used == 0) return -1;
+    size_t hole_size;
+    size_t remaining;
+    long use_offset;
+    Index_deleted_book *hole, *new_hole;
+
+    if (del_arr == NULL || del_arr->used == 0)
+        return ERR;
 
     /* 1. Find the index based on strategy */
-    for (i = 0; i < del_arr->used; i++)
+    if (strategy == WORSTFIT)
     {
-        if (del_arr->array[i]->register_size >= required_size)
+        if (del_arr->array[0]->register_size >= required_size)
         {
-            size_t diff = del_arr->array[i]->register_size - required_size;
-
-            if (strategy == FIRSTFIT) {
-                best_index = i;
-                break; 
-            }
-            else if (strategy == BESTFIT) {
+            best_index = 0;
+        }
+    }
+    else if (strategy == BESTFIT || strategy == FIRSTFIT)
+    {
+        for (i = 0; i < del_arr->used; i++)
+        {
+            if (del_arr->array[i]->register_size >= required_size)
+            {
                 best_index = i;
                 break;
             }
-            else if (strategy == WORSTFIT) {
-                if (diff >= max_diff) {
-                    max_diff = diff;
-                    best_index = i;
-                }
-            }
         }
     }
-
-    if (best_index == -1) return -1; // No suitable hole found
+    if (best_index == -1)
+        return NOT_FOUNDED; // No suitable hole found
 
     /* 2. Extract info */
-    Index_deleted_book *hole = del_arr->array[best_index];
-    long use_offset = hole->offset;
-    size_t hole_size = hole->register_size;
+    hole = del_arr->array[best_index];
+    use_offset = hole->offset;
+    hole_size = hole->register_size;
 
     /* 3. Handle remaining space (Fragmentation) */
-    size_t remaining = hole_size - required_size;
-    
+    remaining = hole_size - required_size;
+
     /* Remove the used hole from the array (Shift left) */
     free(hole);
-    for (int k = best_index; k < del_arr->used - 1; k++) {
+    for (k = best_index; k < del_arr->used - 1; k++)
+    {
         del_arr->array[k] = del_arr->array[k + 1];
     }
     del_arr->used--;
 
     /* If there is remaining space, add it back as a new hole */
-    if (remaining > 0) {
-        Index_deleted_book *new_hole = malloc(sizeof(Index_deleted_book));
+    if (remaining > 0)
+    {
+        new_hole = malloc(sizeof(Index_deleted_book));
+        if (new_hole == NULL)
+        {
+            return ERR;
+        }
         new_hole->offset = use_offset + required_size;
         new_hole->register_size = remaining;
         insertDelArray(del_arr, new_hole, strategy);
@@ -467,6 +481,7 @@ int main(int argc, char *argv[])
     char ind_filename[MAX_STRING + 5];     /* filename of index information to stored end with .ind */
     char ind_del_filename[MAX_STRING + 5]; /* filename of deleted index information to stored end with .lst */
     size_t i;
+    long hole_offset; /* offset of hole that can be used to insert register when we are adding new book */
 
     if (argc < 3)
     {
@@ -534,7 +549,7 @@ int main(int argc, char *argv[])
     fprintf(stdout, "exit\n");
 
     /* Open the file that we are going to store book information*/
-    pfile = fopen(db_filename, "wb");
+    pfile = fopen(db_filename, "rb+");
     if (pfile == NULL)
     {
         freeArray(ind_arr);
@@ -544,7 +559,7 @@ int main(int argc, char *argv[])
     }
 
     /* Open the file that we are going to store deleted_index information */
-    pfile_del = fopen(ind_del_filename, "wb");
+    pfile_del = fopen(ind_del_filename, "rb+");
     if (pfile_del == NULL)
     {
         freeArray(ind_arr);
@@ -612,14 +627,27 @@ int main(int argc, char *argv[])
             /* total size of register */
             registro->size = sizeof(registro->book_id) + strlen(registro->isbn) + strlen(registro->title) + strlen(registro->printedBy) + sizeof(char);
 
-            book_to_file(pfile, registro);
-
-            /* values for ind */
+            hole_offset = find_and_use_hole(ind_del_arr, registro->size, strategy);
+            if (hole_offset >= 0)
+            {
+                fseek(pfile, hole_offset, SEEK_SET);
+            }
+            else if (hole_offset == NOT_FOUNDED)
+            {
+                /* values for ind */
+                fseek(pfile, 0, SEEK_END);
+            }
+            else if (hole_offset == ERR)
+            {
+                /* pediente de clean up*/
+            }
+            offset = ftell(pfile);
             ind->key = registro->book_id;
             ind->offset = offset;
             ind->size = registro->size;
-            offset = ftell(pfile);
 
+            /* add book to the file */
+            book_to_file(pfile, registro);
             /*insert ind to arr*/
             insertArray(ind_arr, ind);
 
