@@ -96,9 +96,7 @@ void initArray(Array *a, size_t initialSize)
 
 short insertArray(Array *a, Indexbook *ind)
 {
-    int i, k;
-    size_t size;
-    Index_deleted_book *ind_del;
+    int i;
     if (a->used == a->size)
     {
         a->size *= 2;
@@ -398,8 +396,6 @@ void remove_from_index(Array *arr, int pos)
 long find_and_use_hole(Del_Array *del_arr, size_t required_size, int strategy)
 {
     int i, k, best_index = -1;
-    size_t min_diff = -1; // Max value equivalent
-    size_t max_diff = 0;
     size_t hole_size;
     size_t remaining;
     long use_offset;
@@ -418,7 +414,7 @@ long find_and_use_hole(Del_Array *del_arr, size_t required_size, int strategy)
     }
     else if (strategy == BESTFIT || strategy == FIRSTFIT)
     {
-        for (i = 0; i < del_arr->used; i++)
+        for (i = 0; (size_t)i < del_arr->used; i++)
         {
             if (del_arr->array[i]->register_size >= required_size)
             {
@@ -428,7 +424,7 @@ long find_and_use_hole(Del_Array *del_arr, size_t required_size, int strategy)
         }
     }
     if (best_index == -1)
-        return NOT_FOUNDED; // No suitable hole found
+        return NOT_FOUNDED; /*No suitable hole found*/
 
     /* 2. Extract info */
     hole = del_arr->array[best_index];
@@ -440,7 +436,7 @@ long find_and_use_hole(Del_Array *del_arr, size_t required_size, int strategy)
 
     /* Remove the used hole from the array (Shift left) */
     free(hole);
-    for (k = best_index; k < del_arr->used - 1; k++)
+    for (k = best_index; (size_t)k < del_arr->used - 1; k++)
     {
         del_arr->array[k] = del_arr->array[k + 1];
     }
@@ -462,6 +458,7 @@ long find_and_use_hole(Del_Array *del_arr, size_t required_size, int strategy)
     return use_offset;
 }
 
+
 int main(int argc, char *argv[])
 {
     FILE *pfile = NULL, *pfile_del = NULL;
@@ -482,6 +479,17 @@ int main(int argc, char *argv[])
     char ind_del_filename[MAX_STRING + 5]; /* filename of deleted index information to stored end with .lst */
     size_t i;
     long hole_offset; /* offset of hole that can be used to insert register when we are adding new book */
+    char *buffer;
+    char isbn_buff[ISBN + 1];
+    char title_buff[MAX_STRING + 1];
+    char printed_buff[MAX_STRING + 1];
+    char *ptr_title;
+    char *ptr_pipe;
+    long data_len;
+    size_t rec_size;
+    int current_id;
+    long header_size;
+
 
     if (argc < 3)
     {
@@ -710,6 +718,148 @@ int main(int argc, char *argv[])
                 fprintf(stdout, "    size: #%ld\n", ind_del_arr->array[i]->register_size);
             }
             fprintf(stdout, "exit\n");
+        }
+        else if (strcmp(token, "find") == 0)
+        {
+            /* 1. Obtener el book_id del comando */
+            token = strtok(NULL, "\r\n");
+            if (token == NULL) continue;
+            book_id = atoi(token);
+
+            /* 2. Buscar en el índice en memoria */
+            result_bsc = binary_search(ind_arr, book_id);
+
+            if (result_bsc == NOT_FOUNDED || result_bsc == ERR)
+            {
+                fprintf(stdout, "Record with bookId=%d does not exist\n", book_id);
+            }
+            else
+            {
+                /* 3. Recuperar offset y tamaño del registro desde el índice */
+                offset = ind_arr->array[result_bsc]->offset;
+                rec_size = ind_arr->array[result_bsc]->size;
+
+                /* Calculamos el tamaño de los datos de texto (Total - size_t - int) */
+                /* Estructura en disco: [size_t][book_id][ISBN][Title][|][PrintedBy] */
+                header_size = sizeof(size_t) + sizeof(int);
+                data_len = rec_size - header_size;
+
+                if (data_len > 0)
+                {
+                    buffer = (char *)malloc(data_len + 1); /* +1 para seguridad del '\0' */
+                    if (buffer != NULL)
+                    {
+                        /* 4. Nos posicionamos en el archivo saltando size y book_id */
+                        fseek(pfile, offset + header_size, SEEK_SET);
+
+                        /* Leemos todos los datos de texto de una vez */
+                        if ((long)fread(buffer, 1, data_len, pfile) == data_len)
+                        {
+                            buffer[data_len] = '\0'; /* Aseguramos terminación nula */
+
+                            /* A. Extraer ISBN */
+                            /* NOTA: Dado que book_to_file no pone separador entre ISBN y Titulo,
+                               asumimos por la definición #define ISBN 16 que los primeros 
+                               16 bytes corresponden al ISBN */
+                            strncpy(isbn_buff, buffer, ISBN);
+                            isbn_buff[ISBN] = '\0';
+
+                            /* B. Extraer Título (desde el fin del ISBN hasta el pipe '|') */
+                            ptr_title = buffer + ISBN; 
+                            ptr_pipe = strchr(ptr_title, '|');
+                            
+                            if (ptr_pipe != NULL)
+                            {
+                                /* Calculamos longitud del título */
+                                int title_len = ptr_pipe - ptr_title;
+                                if (title_len > MAX_STRING) title_len = MAX_STRING;
+                                
+                                strncpy(title_buff, ptr_title, title_len);
+                                title_buff[title_len] = '\0';
+
+                                /* C. Extraer PrintedBy (lo que queda después del pipe) */
+                                strncpy(printed_buff, ptr_pipe + 1, MAX_STRING);
+                                printed_buff[MAX_STRING] = '\0';
+                            }
+                            else
+                            {
+                                /* Caso de error en formato de archivo */
+                                strcpy(title_buff, ptr_title);
+                                strcpy(printed_buff, "Unknown");
+                            }
+
+                            /* 5. Imprimir resultado con el formato solicitado */
+                            fprintf(stdout, "%d|%s|%s|%s\n", book_id, isbn_buff, title_buff, printed_buff);
+                        }
+                        free(buffer);
+                    }
+                }
+            }
+        }
+        else if (strcmp(token, "printRec") == 0)
+        {
+
+            /* Tamaño de los metadatos al inicio del registro: size_t + int */
+            header_size = sizeof(size_t) + sizeof(int);
+
+            /* Iteramos por el índice, que garantiza el orden por BookID y que no hay borrados */
+            for (i = 0; i < ind_arr->used; i++)
+            {
+                /* Recuperamos datos del índice */
+                offset = ind_arr->array[i]->offset;
+                rec_size = ind_arr->array[i]->size;
+                current_id = ind_arr->array[i]->key; 
+
+                /* Calculamos cuánto ocupan las cadenas de texto */
+                data_len = rec_size - header_size;
+
+                if (data_len > 0)
+                {
+                    buffer = (char *)malloc(data_len + 1);
+                    if (buffer != NULL)
+                    {
+                        /* Nos posicionamos saltando el size y el ID, directos al texto */
+                        fseek(pfile, offset + header_size, SEEK_SET);
+
+                        if ((long)fread(buffer, 1, data_len, pfile) == data_len)
+                        {
+                            buffer[data_len] = '\0'; /* Null termination de seguridad */
+
+                            /* 1. Extraer ISBN (Primeros 16 bytes fijos) */
+                            strncpy(isbn_buff, buffer, ISBN);
+                            isbn_buff[ISBN] = '\0';
+
+                            /* 2. Localizar separador '|' entre Título y Editorial */
+                            ptr_title = buffer + ISBN;
+                            ptr_pipe = strchr(ptr_title, '|');
+
+                            if (ptr_pipe != NULL)
+                            {
+                                /* Extraer Título */
+                                int title_len = ptr_pipe - ptr_title;
+                                if (title_len > MAX_STRING) title_len = MAX_STRING;
+                                
+                                strncpy(title_buff, ptr_title, title_len);
+                                title_buff[title_len] = '\0';
+
+                                /* Extraer Editorial (lo que sigue al pipe) */
+                                strncpy(printed_buff, ptr_pipe + 1, MAX_STRING);
+                                printed_buff[MAX_STRING] = '\0';
+                            }
+                            else 
+                            {
+                                /* Fallback por si el archivo está corrupto */
+                                strcpy(title_buff, ptr_title);
+                                strcpy(printed_buff, "N/A");
+                            }
+
+                            /* Imprimir en el formato solicitado */
+                            fprintf(stdout, "%d|%s|%s|%s\n", current_id, isbn_buff, title_buff, printed_buff);
+                        }
+                        free(buffer);
+                    }
+                }
+            }
         }
     }
 
