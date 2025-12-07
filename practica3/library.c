@@ -458,10 +458,68 @@ long find_and_use_hole(Del_Array *del_arr, size_t required_size, int strategy)
     return use_offset;
 }
 
+/**
+ * @brief reload_del_index reloads deleted book'index in the given file using binary mode
+ * @author Shaofan Xu
+ * @date 7/12/2025
+ *
+ * @param pfile pointer to the file to load index: NOT NULL
+ * @param ind pointer to the arry of DelIndexbook to save index from file
+ *
+ * @return OK if everythings is ok, and error in other case
+ */
+short reload_del_index(FILE *pfile, Del_Array *del_arr)
+{
+    Index_deleted_book *del_temp;
+    int strategy;
+
+    /*the file or index structure is NULL*/
+    if (pfile == NULL || del_arr == NULL)
+    {
+        return ERR;
+    }
+
+    /* read the strategy used*/
+    if (fread(&(strategy), sizeof(strategy), 1, pfile) != 1)
+    {
+        /* nothing in the file */
+        return OK;
+    }
+    /*process of loading index*/
+
+    while (1)
+    {
+        /*Allocate memory for index*/
+        del_temp = malloc(sizeof(Index_deleted_book));
+        if (del_temp == NULL)
+        {
+            return ERR;
+        }
+
+        /*loading data*/
+        if (fread(&(del_temp->offset), sizeof(del_temp->offset), 1, pfile) != 1)
+        {
+            free(del_temp);
+            /*the loop end when the file have not index to load*/
+            return ERR;
+        }
+
+        if (fread(&(del_temp->register_size), sizeof(del_temp->register_size), 1, pfile) != 1)
+        {
+            free(del_temp);
+            return ERR;
+        }
+
+        /*Add index to the array of Indexbook*/
+        insertDelArray(del_arr, del_temp,strategy);
+    }
+
+    return OK;
+}
 
 int main(int argc, char *argv[])
 {
-    FILE *pfile = NULL, *pfile_del = NULL;
+    FILE *pfile_db = NULL, *pfile_del = NULL,*pfile_ind=NULL;
     Record *registro;
     Array *ind_arr = NULL;
     Del_Array *ind_del_arr = NULL;
@@ -489,7 +547,6 @@ int main(int argc, char *argv[])
     size_t rec_size;
     int current_id;
     long header_size;
-
 
     if (argc < 3)
     {
@@ -537,23 +594,46 @@ int main(int argc, char *argv[])
     initDelArray(ind_del_arr, 5);
     offset = 0; /*Esto hay que cambiar ya que los indice debe esta ordenado*/
 
-    /*Check if exists file which index information and store them before run programm*/
-    pfile = fopen(ind_filename, "rb");
-    if (pfile != NULL)
+    /*Check if exists file with index information and store them before run programm*/
+    pfile_ind = fopen(ind_filename, "rb");
+    if (pfile_ind != NULL)
     {
         /*reloading the index*/
-        if (reload_index(pfile, ind_arr) == ERR)
+        if (reload_index(pfile_ind, ind_arr) == ERR)
         {
             freeArray(ind_arr);
             freeDelArray(ind_del_arr);
             return ERR;
         }
+    }
+    else
+    {
+        pfile_ind = fopen(ind_filename, "wb");
+        if (pfile_ind == NULL)
+        {
+            /* pendiente de clen up*/
+        }
+    }
+
+    /*Check if exists file with deleted index information and store them before run programm*/
+    pfile_del = fopen(ind_del_filename, "rb");
+    if (pfile_del != NULL)
+    {
+        /*reloading the index*/
+        if (reload_del_index(pfile_del, ind_del_arr) == ERR)
+        {
+            freeArray(ind_arr);
+            freeDelArray(ind_del_arr);
+            fclose(pfile_ind);
+            return ERR;
+        }
 
         /*close the index file*/
-        fclose(pfile);
-    }else{
-        pfile = fopen(ind_filename,"wb");
-        if(pfile==NULL)
+    }
+    else
+    {
+        pfile_del = fopen(ind_del_filename, "wb");
+        if (pfile_del == NULL)
         {
             /* pendiente de clen up*/
         }
@@ -563,29 +643,23 @@ int main(int argc, char *argv[])
     fprintf(stdout, "exit\n");
 
     /* Open the file that we are going to store book information*/
-    pfile = fopen(db_filename, "rb+");
-    if (pfile == NULL)
+    pfile_db = fopen(db_filename, "rb+");
+    if (pfile_db == NULL)
     {
         freeArray(ind_arr);
         freeDelArray(ind_del_arr);
-
+        fclose(pfile_del);
+        fclose(pfile_ind);
         return ERR;
     }
 
     /* Open the file that we are going to store deleted_index information */
-    pfile_del = fopen(ind_del_filename, "rb+");
-    if (pfile_del == NULL)
-    {
-        freeArray(ind_arr);
-        freeDelArray(ind_del_arr);
-        fclose(pfile);
-
-        return ERR;
-    }
     registro = malloc(sizeof(Record));
     if (registro == NULL)
     {
-        fclose(pfile);
+        fclose(pfile_del);
+        fclose(pfile_db);
+        fclose(pfile_ind);
         fclose(pfile_del);
         freeArray(ind_arr);
         freeDelArray(ind_del_arr);
@@ -603,8 +677,9 @@ int main(int argc, char *argv[])
             ind = malloc(sizeof(Indexbook));
             if (ind == NULL)
             {
-                fclose(pfile);
                 fclose(pfile_del);
+                fclose(pfile_db);
+                fclose(pfile_ind);
                 freeArray(ind_arr);
                 freeDelArray(ind_del_arr);
                 free(registro);
@@ -644,24 +719,24 @@ int main(int argc, char *argv[])
             hole_offset = find_and_use_hole(ind_del_arr, registro->size, strategy);
             if (hole_offset >= 0)
             {
-                fseek(pfile, hole_offset, SEEK_SET);
+                fseek(pfile_db, hole_offset, SEEK_SET);
             }
             else if (hole_offset == NOT_FOUNDED)
             {
                 /* values for ind */
-                fseek(pfile, 0, SEEK_END);
+                fseek(pfile_db, 0, SEEK_END);
             }
             else if (hole_offset == ERR)
             {
                 /* pediente de clean up*/
             }
-            offset = ftell(pfile);
+            offset = ftell(pfile_db);
             ind->key = registro->book_id;
             ind->offset = offset;
             ind->size = registro->size;
 
             /* add book to the file */
-            book_to_file(pfile, registro);
+            book_to_file(pfile_db, registro);
             /*insert ind to arr*/
             insertArray(ind_arr, ind);
 
@@ -688,9 +763,9 @@ int main(int argc, char *argv[])
             /* Check if the book_id is in the ind or not*/
             result_bsc = binary_search(ind_arr, book_id);
             if (result_bsc == ERR)
-            {
-                fclose(pfile);
-                fclose(pfile_del);
+            {   fclose(pfile_del);
+                fclose(pfile_db);
+                fclose(pfile_ind);
                 freeArray(ind_arr);
                 freeDelArray(ind_del_arr);
                 free(registro);
@@ -723,7 +798,8 @@ int main(int argc, char *argv[])
         {
             /* 1. Obtener el book_id del comando */
             token = strtok(NULL, "\r\n");
-            if (token == NULL) continue;
+            if (token == NULL)
+                continue;
             book_id = atoi(token);
 
             /* 2. Buscar en el índice en memoria */
@@ -750,30 +826,31 @@ int main(int argc, char *argv[])
                     if (buffer != NULL)
                     {
                         /* 4. Nos posicionamos en el archivo saltando size y book_id */
-                        fseek(pfile, offset + header_size, SEEK_SET);
+                        fseek(pfile_db, offset + header_size, SEEK_SET);
 
                         /* Leemos todos los datos de texto de una vez */
-                        if ((long)fread(buffer, 1, data_len, pfile) == data_len)
+                        if ((long)fread(buffer, 1, data_len, pfile_db) == data_len)
                         {
                             buffer[data_len] = '\0'; /* Aseguramos terminación nula */
 
                             /* A. Extraer ISBN */
                             /* NOTA: Dado que book_to_file no pone separador entre ISBN y Titulo,
-                               asumimos por la definición #define ISBN 16 que los primeros 
+                               asumimos por la definición #define ISBN 16 que los primeros
                                16 bytes corresponden al ISBN */
                             strncpy(isbn_buff, buffer, ISBN);
                             isbn_buff[ISBN] = '\0';
 
                             /* B. Extraer Título (desde el fin del ISBN hasta el pipe '|') */
-                            ptr_title = buffer + ISBN; 
+                            ptr_title = buffer + ISBN;
                             ptr_pipe = strchr(ptr_title, '|');
-                            
+
                             if (ptr_pipe != NULL)
                             {
                                 /* Calculamos longitud del título */
                                 int title_len = ptr_pipe - ptr_title;
-                                if (title_len > MAX_STRING) title_len = MAX_STRING;
-                                
+                                if (title_len > MAX_STRING)
+                                    title_len = MAX_STRING;
+
                                 strncpy(title_buff, ptr_title, title_len);
                                 title_buff[title_len] = '\0';
 
@@ -808,7 +885,7 @@ int main(int argc, char *argv[])
                 /* Recuperamos datos del índice */
                 offset = ind_arr->array[i]->offset;
                 rec_size = ind_arr->array[i]->size;
-                current_id = ind_arr->array[i]->key; 
+                current_id = ind_arr->array[i]->key;
 
                 /* Calculamos cuánto ocupan las cadenas de texto */
                 data_len = rec_size - header_size;
@@ -819,9 +896,9 @@ int main(int argc, char *argv[])
                     if (buffer != NULL)
                     {
                         /* Nos posicionamos saltando el size y el ID, directos al texto */
-                        fseek(pfile, offset + header_size, SEEK_SET);
+                        fseek(pfile_db, offset + header_size, SEEK_SET);
 
-                        if ((long)fread(buffer, 1, data_len, pfile) == data_len)
+                        if ((long)fread(buffer, 1, data_len, pfile_db) == data_len)
                         {
                             buffer[data_len] = '\0'; /* Null termination de seguridad */
 
@@ -837,8 +914,9 @@ int main(int argc, char *argv[])
                             {
                                 /* Extraer Título */
                                 int title_len = ptr_pipe - ptr_title;
-                                if (title_len > MAX_STRING) title_len = MAX_STRING;
-                                
+                                if (title_len > MAX_STRING)
+                                    title_len = MAX_STRING;
+
                                 strncpy(title_buff, ptr_title, title_len);
                                 title_buff[title_len] = '\0';
 
@@ -846,7 +924,7 @@ int main(int argc, char *argv[])
                                 strncpy(printed_buff, ptr_pipe + 1, MAX_STRING);
                                 printed_buff[MAX_STRING] = '\0';
                             }
-                            else 
+                            else
                             {
                                 /* Fallback por si el archivo está corrupto */
                                 strcpy(title_buff, ptr_title);
@@ -864,19 +942,12 @@ int main(int argc, char *argv[])
     }
 
     /* Start print in the index file*/
-    fclose(pfile);
-    pfile = fopen(ind_filename, "rb+");
-    if (pfile == NULL)
-    {
+    fclose(pfile_db);
+    if (index_to_file(pfile_ind, ind_arr) == ERR)
+    {      
         fclose(pfile_del);
-        free(registro);
-        freeArray(ind_arr);
-        freeDelArray(ind_del_arr);
-        return ERR;
-    }
-    if (index_to_file(pfile, ind_arr) == ERR)
-    {
-        fclose(pfile);
+        fclose(pfile_db);
+        fclose(pfile_ind);        
         free(registro);
         freeArray(ind_arr);
         freeDelArray(ind_del_arr);
@@ -885,7 +956,8 @@ int main(int argc, char *argv[])
     /* finished */
     fprintf(stdout, "all done\n");
     index_del_to_file(pfile_del, ind_del_arr, strategy);
-    fclose(pfile);
+    fclose(pfile_db);
+    fclose(pfile_ind);
     fclose(pfile_del);
     free(registro);
     freeArray(ind_arr);
