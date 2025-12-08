@@ -16,7 +16,7 @@ $(EXE): $(OBJ)
 	$(CC) $(CFLAGS) -o $(EXE) $(OBJ) 
 
 clean:
-	@rm -f *.o core $(EXE)
+	@rm -f *.o core $(EXE) $(FILENAME).db $(FILENAME).ind $(FILENAME).lst
 
 run: $(EXE)
 	./$(EXE) best_fit $(FILENAME)
