@@ -2,7 +2,7 @@
 # 04
 # add test no check if index is loaded
 # properly when program is started
-set timeout -1
+set timeout 1
 set programName "library"
 set filename "test"
 
