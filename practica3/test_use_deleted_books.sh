@@ -57,4 +57,33 @@ expect "    offset: #136"
 expect "    size: #36"
 expect "exit"
 
-# delete books
+# delete second books
+send "del 12345\r"
+expect "Record with BookID=12347 has been deleted"
+expect "exit"
+send "printInd\n"
+expect "    key: #12346"
+expect "    key: #12347"
+expect "    key: #12348"
+expect "exit"
+
+# add a book with the same size or less size as seconde books
+send "add 99999|978-0-00000000-0|Reuse|Yes\r"
+expect "Record with BookID=99999 has been added"
+send "printInd\r"
+expect {
+    "key: #99999\r\n    offset: #46" {
+        send_user "\n\nSUCCESS: Space Reuse Verified! New book is at offset 46.\n"
+    }
+    "key: #99999\r\n    offset: #136" { 
+        send_user "\n\nFAILURE: New book appended to end, hole NOT reused.\n"
+        exit 1
+    }
+    timeout {
+        send_user "\n\nFAILURE: Test timed out.\n"
+        exit 1
+    }
+}
+
+send "exit\r"
+expect eof

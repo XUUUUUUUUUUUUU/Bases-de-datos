@@ -220,7 +220,7 @@ short book_to_file(FILE *pfile, Record *registro)
         return ERR;
 
     /* write isbn*/
-    if (fwrite(registro->isbn, strlen(registro->isbn), 1, pfile) != 1)
+    if (fwrite(registro->isbn, ISBN, 1, pfile) != 1)
         return ERR;
 
     /* write title */
@@ -501,7 +501,14 @@ short reload_del_index(FILE *pfile, Del_Array *del_arr)
         {
             free(del_temp);
             /*the loop end when the file have not index to load*/
-            return ERR;
+            if (feof(pfile)) 
+            {
+                return OK;
+            }
+            else 
+            {
+                return ERR;
+            }
         }
 
         if (fread(&(del_temp->register_size), sizeof(del_temp->register_size), 1, pfile) != 1)
@@ -511,7 +518,7 @@ short reload_del_index(FILE *pfile, Del_Array *del_arr)
         }
 
         /*Add index to the array of Indexbook*/
-        insertDelArray(del_arr, del_temp,strategy);
+        insertDelArray(del_arr, del_temp, strategy);
     }
 
     return OK;
@@ -519,7 +526,7 @@ short reload_del_index(FILE *pfile, Del_Array *del_arr)
 
 int main(int argc, char *argv[])
 {
-    FILE *pfile_db = NULL, *pfile_del = NULL,*pfile_ind=NULL;
+    FILE *pfile_db = NULL, *pfile_del = NULL, *pfile_ind = NULL;
     Record *registro;
     Array *ind_arr = NULL;
     Del_Array *ind_del_arr = NULL;
@@ -605,6 +612,7 @@ int main(int argc, char *argv[])
             freeDelArray(ind_del_arr);
             return ERR;
         }
+        fclose(pfile_ind);
     }
     else
     {
@@ -622,6 +630,7 @@ int main(int argc, char *argv[])
         /*reloading the index*/
         if (reload_del_index(pfile_del, ind_del_arr) == ERR)
         {
+            printf("problem\n");
             freeArray(ind_arr);
             freeDelArray(ind_del_arr);
             fclose(pfile_ind);
@@ -629,6 +638,7 @@ int main(int argc, char *argv[])
         }
 
         /*close the index file*/
+        fclose(pfile_del);
     }
     else
     {
@@ -638,12 +648,11 @@ int main(int argc, char *argv[])
             /* pendiente de clen up*/
         }
     }
-
     fprintf(stdout, "Type command and arguments/s.\n");
     fprintf(stdout, "exit\n");
 
     /* Open the file that we are going to store book information*/
-    pfile_db = fopen(db_filename, "rb+");
+    pfile_db = fopen(db_filename, "wb");
     if (pfile_db == NULL)
     {
         freeArray(ind_arr);
@@ -660,7 +669,6 @@ int main(int argc, char *argv[])
         fclose(pfile_del);
         fclose(pfile_db);
         fclose(pfile_ind);
-        fclose(pfile_del);
         freeArray(ind_arr);
         freeDelArray(ind_del_arr);
 
@@ -714,7 +722,7 @@ int main(int argc, char *argv[])
             registro->printedBy[MAX_STRING] = '\0';
 
             /* total size of register */
-            registro->size = sizeof(registro->book_id) + strlen(registro->isbn) + strlen(registro->title) + strlen(registro->printedBy) + sizeof(char);
+            registro->size = sizeof(registro->book_id) + ISBN + strlen(registro->title) + strlen(registro->printedBy) + sizeof(char);
 
             hole_offset = find_and_use_hole(ind_del_arr, registro->size, strategy);
             if (hole_offset >= 0)
@@ -763,7 +771,8 @@ int main(int argc, char *argv[])
             /* Check if the book_id is in the ind or not*/
             result_bsc = binary_search(ind_arr, book_id);
             if (result_bsc == ERR)
-            {   fclose(pfile_del);
+            {
+                fclose(pfile_del);
                 fclose(pfile_db);
                 fclose(pfile_ind);
                 freeArray(ind_arr);
@@ -943,11 +952,17 @@ int main(int argc, char *argv[])
 
     /* Start print in the index file*/
     fclose(pfile_db);
+
+    pfile_ind = fopen(ind_filename, "wb");
+    if (pfile_ind == NULL)
+    {
+        /* pendiente de clen up*/
+    }
+
     if (index_to_file(pfile_ind, ind_arr) == ERR)
-    {      
+    {
         fclose(pfile_del);
-        fclose(pfile_db);
-        fclose(pfile_ind);        
+        fclose(pfile_ind);
         free(registro);
         freeArray(ind_arr);
         freeDelArray(ind_del_arr);
@@ -955,8 +970,13 @@ int main(int argc, char *argv[])
     }
     /* finished */
     fprintf(stdout, "all done\n");
+
+    pfile_del = fopen(ind_del_filename, "wb");
+    if (pfile_del == NULL)
+    {
+        /* pendiente de clen up*/
+    }
     index_del_to_file(pfile_del, ind_del_arr, strategy);
-    fclose(pfile_db);
     fclose(pfile_ind);
     fclose(pfile_del);
     free(registro);
