@@ -3,8 +3,9 @@ CFLAGS = -Wall -Wextra -pedantic -ansi
 
 EXE= library
 OBJ= $(EXE).o
+FILENAME=test
 
-.PHONY: clean run valgrind
+.PHONY: clean run valgrind best_fit first_fit worst_fit
 
 %.o: %.c
 	@echo Compiling $<...
@@ -17,8 +18,17 @@ $(EXE): $(OBJ)
 clean:
 	@rm -f *.o core $(EXE)
 
-run:
-	./$(EXE)
+run: $(EXE)
+	./$(EXE) best_fit $(FILENAME)
+
+best_fit: $(EXE)
+	./$(EXE) best_fit $(FILENAME)
+
+first_fit: $(EXE)
+	./$(EXE) first_fit $(FILENAME)
+
+worst_fit: $(EXE)
+	./$(EXE) worst_fit $(FILENAME)
 
 valgrind:
 	valgrind --leak-check=full -s --log-file=valgrind.log ./$(EXE)
