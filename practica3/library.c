@@ -2,15 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define ISBN 16          /* Max length of ISBN code of book */
-#define MAX_STRING 128   /* Max length of strings */
-#define MAX_COMMAND 1024 /* Max length of commands */
-#define OK 0             /* Ok code, if all things is ok */
-#define ERR -1           /* Error code */
-#define NOT_FOUNDED -2   /* No se ha encontrado key en busqueda binaria */
-#define BESTFIT 0
-#define WORSTFIT 1
-#define FIRSTFIT 2
+#include "find.h"
+#include "types.h"
 
 typedef struct
 {
@@ -50,42 +43,6 @@ typedef struct
 } Del_Array;
 
 /* auxiliar functions */
-/**
- * @brief binary_search print a book in the given file using binary mode
- * @author Shaofan Xu
- * @date 29/11/2025
- *
- * @param arr pointer to the Array which store all index : NOT NULL;
- * @param book_id  key we want to search
- *
- * @return Position if the key its founded; NOT_FOUNDED when there is no element match to the key; ERR in other case
- */
-int binary_search(Array *arr, int book_id)
-{
-    int right, left, mid;
-    if (arr == NULL || arr->array == NULL || book_id < 0)
-        return ERR;
-
-    left = 0;
-    right = arr->used - 1;
-    while (left <= right)
-    {
-        mid = (right + left) / 2;
-        if (arr->array[mid]->key == book_id)
-        {
-            return mid;
-        }
-        else if (arr->array[mid]->key > book_id)
-        {
-            right = mid - 1;
-        }
-        else
-        {
-            left = mid + 1;
-        }
-    }
-    return NOT_FOUNDED;
-}
 
 void initArray(Array *a, size_t initialSize)
 {
@@ -501,11 +458,11 @@ short reload_del_index(FILE *pfile, Del_Array *del_arr)
         {
             free(del_temp);
             /*the loop end when the file have not index to load*/
-            if (feof(pfile)) 
+            if (feof(pfile))
             {
                 return OK;
             }
-            else 
+            else
             {
                 return ERR;
             }
@@ -843,9 +800,6 @@ int main(int argc, char *argv[])
                             buffer[data_len] = '\0'; /* Aseguramos terminación nula */
 
                             /* A. Extraer ISBN */
-                            /* NOTA: Dado que book_to_file no pone separador entre ISBN y Titulo,
-                               asumimos por la definición #define ISBN 16 que los primeros
-                               16 bytes corresponden al ISBN */
                             strncpy(isbn_buff, buffer, ISBN);
                             isbn_buff[ISBN] = '\0';
 
