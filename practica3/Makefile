@@ -4,6 +4,7 @@ CFLAGS = -Wall -Wextra -pedantic -ansi
 EXE= library
 OBJ= $(EXE).o del.o add.o find.o 
 FILENAME=test
+STRATEGY=first_fit
 
 .PHONY: clean run valgrind best_fit first_fit worst_fit
 
@@ -29,6 +30,9 @@ first_fit: $(EXE)
 
 worst_fit: $(EXE)
 	./$(EXE) worst_fit $(FILENAME)
+
+estrategia: $(EXE)
+	./$(EXE) $(STRATEGY) $(FILENAME)
 
 valgrind:
 	valgrind --leak-check=full -s ./$(EXE) first_fit test
