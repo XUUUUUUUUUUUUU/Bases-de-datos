@@ -73,7 +73,10 @@ int main(int argc, char *argv[])
     long data_len;
     size_t rec_size;
     int current_id;
-    long header_size;
+    int k;
+    long header_skip;
+    char *ptr_editorial;
+    long editorial_len;
 
     if (argc < 3)
     {
@@ -160,7 +163,7 @@ int main(int argc, char *argv[])
     fprintf(stdout, "exit\n");
 
     /* Open the file that we are going to store book information*/
-    pfile_db = fopen(db_filename, "wb");
+    pfile_db = fopen(db_filename, "w+b");
     if (pfile_db == NULL)
     {
         freeAllMemory(pfile_ind, pfile_del, NULL, NULL, ind_arr, ind_del_arr);
@@ -263,72 +266,77 @@ int main(int argc, char *argv[])
                 freeAllMemory(pfile_ind, pfile_del, pfile_db, registro, ind_arr, ind_del_arr);
                 return ERR;
             }
+            fflush(stdout);            /* 1. Escupe el texto */
+            fprintf(stdout, "exit\n"); /* 2. Avisa que terminaste */
         }
-        else if (strcmp(token, "printRec") == 0)
+       else if (strcmp(token, "printRec") == 0)
         {
-
-            /* Tamaño de los metadatos al inicio del registro: size_t + int */
-            header_size = sizeof(size_t) + sizeof(int);
-
-            /* Iteramos por el índice, que garantiza el orden por BookID y que no hay borrados */
+            /* --- ELIMINA LA LÍNEA ANTIGUA DE header_size --- */
+            
             for (i = 0; i < ind_arr->used; i++)
             {
-                /* Recuperamos datos del índice */
                 offset = ind_arr->array[i]->offset;
                 rec_size = ind_arr->array[i]->size;
                 current_id = ind_arr->array[i]->key;
 
-                /* Calculamos cuánto ocupan las cadenas de texto */
-                data_len = rec_size - header_size;
+                /* --- CORRECCIÓN AQUÍ --- */
+                /* data_len es el tamaño del registro SIN el ID */
+                data_len = rec_size - sizeof(int);
+                /* header_skip es size_t + int */
+                header_skip = sizeof(size_t) + sizeof(int);
 
                 if (data_len > 0)
                 {
                     buffer = (char *)malloc(data_len + 1);
                     if (buffer != NULL)
                     {
-                        /* Nos posicionamos saltando el size y el ID, directos al texto */
-                        fseek(pfile_db, offset + header_size, SEEK_SET);
+                        /* Usamos header_skip para movernos */
+                        fseek(pfile_db, offset + header_skip, SEEK_SET);
 
                         if ((long)fread(buffer, 1, data_len, pfile_db) == data_len)
                         {
-                            buffer[data_len] = '\0'; /* Null termination de seguridad */
-
-                            /* 1. Extraer ISBN (Primeros 16 bytes fijos) */
-                            strncpy(isbn_buff, buffer, ISBN);
+                            /* ... (AQUÍ PEGAS LA MISMA LÓGICA DE MEMCPY/BUCLE FOR QUE EN FIND) ... */
+                            /* (Copia el bloque interno del if del código de find.c de arriba) */
+                            
+                            buffer[data_len] = '\0'; 
+                            /* ... ISBN ... */
+                            memcpy(isbn_buff, buffer, ISBN);
                             isbn_buff[ISBN] = '\0';
-
-                            /* 2. Localizar separador '|' entre Título y Editorial */
+                            
+                            /* ... Busqueda del Pipe ... */
                             ptr_title = buffer + ISBN;
-                            ptr_pipe = strchr(ptr_title, '|');
-
-                            if (ptr_pipe != NULL)
-                            {
-                                /* Extraer Título */
-                                int title_len = ptr_pipe - ptr_title;
-                                if (title_len > MAX_STRING)
-                                    title_len = MAX_STRING;
-
-                                strncpy(title_buff, ptr_title, title_len);
+                            ptr_pipe = NULL;
+                            for (k = 0; k < (data_len - ISBN); k++) {
+                                if (ptr_title[k] == '|') { ptr_pipe = ptr_title + k; break; }
+                            }
+                            
+                            /* ... if ptr_pipe != NULL ... lógica de copia de Titulo y Editorial ... */
+                             if (ptr_pipe != NULL) {
+                                long title_len = ptr_pipe - ptr_title;
+                                if (title_len > MAX_STRING) title_len = MAX_STRING;
+                                memcpy(title_buff, ptr_title, title_len);
                                 title_buff[title_len] = '\0';
 
-                                /* Extraer Editorial (lo que sigue al pipe) */
-                                strncpy(printed_buff, ptr_pipe + 1, MAX_STRING);
-                                printed_buff[MAX_STRING] = '\0';
-                            }
-                            else
-                            {
-                                /* Fallback por si el archivo está corrupto */
-                                strcpy(title_buff, ptr_title);
+                                ptr_editorial = ptr_pipe + 1;
+                                editorial_len = (buffer + data_len) - ptr_editorial;
+                                if (editorial_len > MAX_STRING) editorial_len = MAX_STRING;
+                                if (editorial_len < 0) editorial_len = 0;
+                                memcpy(printed_buff, ptr_editorial, editorial_len);
+                                printed_buff[editorial_len] = '\0';
+                            } else {
+                                strncpy(title_buff, ptr_title, MAX_STRING);
+                                title_buff[MAX_STRING] = '\0';
                                 strcpy(printed_buff, "N/A");
                             }
 
-                            /* Imprimir en el formato solicitado */
                             fprintf(stdout, "%d|%s|%s|%s\n", current_id, isbn_buff, title_buff, printed_buff);
                         }
                         free(buffer);
                     }
                 }
             }
+            fflush(stdout);
+            fprintf(stdout, "exit\n");
         }
     }
 
