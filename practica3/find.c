@@ -50,7 +50,6 @@ short find(Array *ind_arr, int book_id, FILE *pfile_db)
     char *ptr_pipe;
     long data_len;
     size_t rec_size;
-    int current_id;
     long header_size;
     int result_bsc;
     long int offset;

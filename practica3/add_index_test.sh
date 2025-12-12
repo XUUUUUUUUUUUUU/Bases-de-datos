@@ -10,7 +10,7 @@ set filename "test"
 spawn rm -f $filename.db $filename.ind
 
 # call program
-spawn valgrind --track-origins=yes ./$programName first_fit test
+spawn valgrind --leak-check=full -s --track-origins=yes ./$programName first_fit test
 expect "Type command and argument/s."
 expect "exit"
 

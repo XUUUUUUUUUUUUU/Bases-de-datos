@@ -10,6 +10,7 @@
 #ifndef FIND_H
 #define FIND_H
 
+#include "types.h"
 /**
  * @brief binary_search print a book in the given file using binary mode
  * @author Shaofan Xu

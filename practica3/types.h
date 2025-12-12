@@ -21,4 +21,43 @@
 #define FIRSTFIT 2
 
 
+/**
+ * @brief Indexbook Structure
+ * This structure store the index of book: key, offset and size
+ */
+typedef struct
+{
+    int key;         /* book_id */
+    long int offset; /* offset of book in the file */
+    size_t size;     /* size of book */
+} Indexbook;
+
+typedef struct
+{
+    Indexbook **array; /* the array of index  */
+    size_t used;       /* used size of index array */
+    size_t size;       /* total size of index array */
+} Array;
+
+/**
+ * @brief Index_deleted_book structure
+ * This structure defines a index of deleted book with size of deleted book register size, offset.
+ */
+
+typedef struct
+{
+    size_t register_size; /* size of register of deleted book*/
+    long int offset;      /* offset of deleted book */
+} Index_deleted_book;
+
+/**
+ * @brief Del_Array structure
+ * This structure defines a Array of Index_deleted_book, size of array and used size.
+ */
+typedef struct
+{
+    Index_deleted_book **array; /* array of deleted books */
+    size_t used;                /* used size of deleted array */
+    size_t size;                /* total size of deleted array */
+} Del_Array;
 #endif
