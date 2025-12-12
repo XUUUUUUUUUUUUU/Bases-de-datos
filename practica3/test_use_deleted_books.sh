@@ -11,7 +11,7 @@ set programName "./library"
 spawn rm -f $filename.db $filename.ind
 
 # call program
-spawn ./$programName first_fit $filename
+spawn valgrind --leak-check=full -s --track-origins=yes ./$programName first_fit $filename
 expect "Type command and argument/s."
 expect "exit"
 
@@ -59,7 +59,7 @@ expect "exit"
 
 # delete second books
 send "del 12345\r"
-expect "Record with BookID=12347 has been deleted"
+expect "Record with BookID=12345 has been deleted"
 expect "exit"
 send "printInd\n"
 expect "    key: #12346"

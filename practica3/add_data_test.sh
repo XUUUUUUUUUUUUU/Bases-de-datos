@@ -11,7 +11,7 @@ set programName "./library"
 spawn rm -f $filename.db $filename.ind
 
 # call program
-spawn ./$programName first_fit $filename
+spawn valgrind --leak-check=full -s --track-origins=yes  ./$programName first_fit $filename
 expect "Type command and argument/s."
 expect "exit"
 
@@ -51,6 +51,7 @@ expect "    offset: #136"
 
 expect "exit"
 send "exit\n"
+expect eof
 
 puts  "1) Four adds OK, ;-)"
 

@@ -10,7 +10,7 @@ set filename "test"
 exec "./add_index_test.sh"
 
 #restart program
-spawn ./$programName first_fit test
+spawn valgrind --leak-check=full -s --track-origins=yes ./$programName first_fit test
 
 # print index
 send "printInd\n"
@@ -34,5 +34,6 @@ expect "    size: #36"
 expect "exit"
 send "exit\n"
 expect "all done"
+expect eof
 puts "1) Index creating OK, ;-)"
 puts "2) Script end"

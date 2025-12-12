@@ -12,7 +12,7 @@ set programName "./library"
 spawn rm -f $filename.db $filename.ind
 
 # call program
-spawn ./$programName first_fit $filename
+spawn valgrind --leak-check=full -s --track-origins=yes ./$programName first_fit $filename
 expect "Type command and argument/s."
 expect "exit"
 
@@ -60,6 +60,8 @@ expect "12347|978-2-12345680-4|La colmena|Alfaguara"
 
 expect "exit"
 send "exit\r"
+
+expect eof
 
 puts "1) Add, Find and PrintRec execution OK, ;-)"
 

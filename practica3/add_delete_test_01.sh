@@ -14,7 +14,7 @@ spawn rm -f $filename.db $filename.ind $filename.lst
 
 # call program
 #spawn valgrind ./$programName first_fit test
-spawn ./$programName first_fit test
+spawn valgrind --leak-check=full -s --track-origins=yes ./$programName first_fit test
 expect "Type command and argument/s."
 expect "exit"
 
@@ -104,6 +104,8 @@ expect "    offset: #136"
 expect "exit"
 send "exit\n"
 expect "all done"
+
+expect eof
 
 puts  "1) Delete index records OK, ;-)"
 

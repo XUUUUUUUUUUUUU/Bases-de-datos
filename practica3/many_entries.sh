@@ -15,7 +15,7 @@ set filename "test"
 # file delete [glob test*]
 spawn rm -f $filename.db $filename.ind
 expr {srand([clock seconds])}    ;# initialize RNG
-spawn ./$programName best_fit test
+spawn valgrind --leak-check=full -s --track-origins=yes  ./$programName best_fit test
 
 for {set x 1001} {$x<30000} {incr x} {
    expect "exit"   
@@ -27,3 +27,4 @@ send "printInd\n"
 expect "exit"
 send "exit\n"
 expect "all done"
+expect eof
