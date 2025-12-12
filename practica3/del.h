@@ -90,12 +90,12 @@ long find_and_use_hole(Del_Array *del_arr, size_t required_size, int strategy);
  * @brief delete_book if remove a book from data base
  * @author Shaofan Xu
  * @date 12/12/2025
- * 
+ *
  * @param ind_arr pointer to array of index
  * @param ind_del_arr pointer to array of deleted book
  * @param book_id the book_id of book to remove
  * @param strategy used to order the array: BEST_FIT,WORST_FIT,FIRST_FIT
- * 
+ *
  * @return OK, if everthings Ok, and ERR in otherwise
  */
 short delete_book(Array *ind_arr, Del_Array *ind_del_arr, int book_id, int strategy);

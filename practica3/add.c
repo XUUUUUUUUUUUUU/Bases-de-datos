@@ -17,7 +17,8 @@
 
 void initArray(Array *arr, size_t initialSize)
 {
-    if(arr==NULL)return;
+    if (arr == NULL)
+        return;
     /* reserve memory for array */
     arr->array = (Indexbook **)malloc(initialSize * sizeof(Indexbook *));
     if (arr->array == NULL)
@@ -195,7 +196,7 @@ void remove_from_index(Array *arr, int pos)
 
 short add_book(Array *ind_arr, Del_Array *ind_del_arr, FILE *pfile_db, Record *registro, int strategy)
 {
-    Indexbook *ind=NULL;
+    Indexbook *ind = NULL;
     long hole_offset;
     long offset;
 
@@ -205,11 +206,11 @@ short add_book(Array *ind_arr, Del_Array *ind_del_arr, FILE *pfile_db, Record *r
         if (binary_search(ind_arr, registro->book_id) >= 0)
         {
             fprintf(stdout, "Record with Book_ID==%d exists\n", registro->book_id);
-            return OK; 
+            return OK;
         }
     }
 
-    ind=malloc(sizeof(Indexbook));
+    ind = malloc(sizeof(Indexbook));
     if (ind == NULL)
     {
         return ERR;
@@ -220,7 +221,7 @@ short add_book(Array *ind_arr, Del_Array *ind_del_arr, FILE *pfile_db, Record *r
 
     /* check deleted book list if there is available space */
     hole_offset = find_and_use_hole(ind_del_arr, registro->size, strategy);
-    
+
     if (hole_offset >= 0)
     {
         fseek(pfile_db, hole_offset, SEEK_SET);
@@ -229,28 +230,30 @@ short add_book(Array *ind_arr, Del_Array *ind_del_arr, FILE *pfile_db, Record *r
     {
         fseek(pfile_db, 0, SEEK_END);
     }
-    else 
+    else
     {
 
         free(ind);
-        return ERR; 
+        return ERR;
     }
 
     offset = ftell(pfile_db);
-    
+
     ind->key = registro->book_id;
     ind->offset = offset;
     ind->size = registro->size;
 
     /* print in the file */
-    if (book_to_file(pfile_db, registro) == ERR) {
+    if (book_to_file(pfile_db, registro) == ERR)
+    {
         free(ind);
         return ERR;
     }
 
     /* insert in the array */
-    if (insertArray(ind_arr, ind) == ERR) {
-        free(ind); 
+    if (insertArray(ind_arr, ind) == ERR)
+    {
+        free(ind);
         return ERR;
     }
 

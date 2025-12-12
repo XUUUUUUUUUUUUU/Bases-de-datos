@@ -36,5 +36,4 @@ int binary_search(Array *arr, int book_id);
  */
 short find(Array *ind_arr, int book_id, FILE *pfile_db);
 
-
 #endif

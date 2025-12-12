@@ -113,13 +113,13 @@ void remove_from_index(Array *arr, int pos);
  * @brief add_book add a book to data base
  * @author Shaofan Xu
  * @date 12/12/2025
- * 
+ *
  * @param ind_arr pointer to array of index
  * @param ind_del_arr pointer to array of deleted book
- * @param pfile_db pointer to file to print the data 
+ * @param pfile_db pointer to file to print the data
  * @param registro pointer to record of book to print
  * @param strategy used to order the array: BEST_FIT,WORST_FIT,FIRST_FIT
- * 
+ *
  * @return OK if everythings is ok, and error in other case
  */
 short add_book(Array *ind_arr, Del_Array *ind_del_arr, FILE *pfile_db, Record *registro, int strategy);

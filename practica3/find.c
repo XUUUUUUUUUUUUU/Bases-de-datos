@@ -16,13 +16,18 @@
 int binary_search(Array *arr, int book_id)
 {
     int right, left, mid;
+
+    /* error control */
     if (arr == NULL || arr->array == NULL || book_id < 0)
         return ERR;
 
     left = 0;
     right = arr->used - 1;
+
+    /* searching */
     while (left <= right)
     {
+        /* calculate the mid of array */
         mid = (right + left) / 2;
         if (arr->array[mid]->key == book_id)
         {
@@ -53,7 +58,7 @@ short find(Array *ind_arr, int book_id, FILE *pfile_db)
     long header_size;
     int result_bsc;
     long int offset;
-    
+
     /* 2. Buscar en el índice en memoria */
     result_bsc = binary_search(ind_arr, book_id);
 

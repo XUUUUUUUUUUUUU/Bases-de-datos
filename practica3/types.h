@@ -1,5 +1,5 @@
 /**
- * @brief It defines all macro magnitud 
+ * @brief It defines all macro magnitud
  *
  * @file types.h
  * @author Alejandro Zheng
@@ -16,10 +16,9 @@
 #define OK 0             /* Ok code, if all things is ok */
 #define ERR -1           /* Error code */
 #define NOT_FOUNDED -2   /* No se ha encontrado key en busqueda binaria */
-#define BESTFIT 0
-#define WORSTFIT 1
-#define FIRSTFIT 2
-
+#define BESTFIT 0        /* Used strategy to order the array of deleted books */
+#define WORSTFIT 1       /* Used strategy to order the array of deleted books */
+#define FIRSTFIT 2       /* Used strategy to order the array of deleted books */
 
 /**
  * @brief Indexbook Structure

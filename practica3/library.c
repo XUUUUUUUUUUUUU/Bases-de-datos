@@ -22,24 +22,30 @@
  * @brief freeAllMemory free all memory need in the function main
  * @author Shaofan Xu
  * @date 12/12/2025
- * 
+ *
  * @param pfile1 pointer to the file to close
  * @param pfile2 pointer to the file to close
  * @param pfile3 pointer to the file to close
  * @param registro pointer to the record to free
  * @param ind_arr pointer to the array of index to free
  * @param ind_del arr pointer to the array of deleted book's index to free
- * 
+ *
  * @return NONE
  */
-void freeAllMemory(FILE *pfile1,FILE *pfile2, FILE *pfile3,Record *registro, Array *ind_arr, Del_Array *ind_del_arr)
+void freeAllMemory(FILE *pfile1, FILE *pfile2, FILE *pfile3, Record *registro, Array *ind_arr, Del_Array *ind_del_arr)
 {
-    if(pfile1 !=NULL)fclose(pfile1);
-    if(pfile2!=NULL)fclose(pfile2);
-    if(pfile3!=NULL)fclose(pfile3);
-    if(registro!=NULL) free(registro);
-    if(ind_arr!=NULL) freeArray(ind_arr);
-    if(ind_del_arr!=NULL) freeDelArray(ind_del_arr);
+    if (pfile1 != NULL)
+        fclose(pfile1);
+    if (pfile2 != NULL)
+        fclose(pfile2);
+    if (pfile3 != NULL)
+        fclose(pfile3);
+    if (registro != NULL)
+        free(registro);
+    if (ind_arr != NULL)
+        freeArray(ind_arr);
+    if (ind_del_arr != NULL)
+        freeDelArray(ind_del_arr);
 }
 
 int main(int argc, char *argv[])
@@ -99,22 +105,22 @@ int main(int argc, char *argv[])
     sprintf(ind_del_filename, "%s.lst", filename);
 
     /*Iniciate the arry of indexbook*/
-    ind_arr=malloc(sizeof(Array));
+    ind_arr = malloc(sizeof(Array));
     if (ind_arr == NULL)
     {
         return ERR;
     }
-    ind_del_arr=malloc(sizeof(Del_Array));
+    ind_del_arr = malloc(sizeof(Del_Array));
     if (ind_del_arr == NULL)
     {
-        freeAllMemory(NULL,NULL,NULL,NULL,ind_arr,NULL);
+        freeAllMemory(NULL, NULL, NULL, NULL, ind_arr, NULL);
         return ERR;
     }
-    initArray(ind_arr,5);
-    initDelArray(ind_del_arr,5);
-    if(ind_arr->array==NULL || ind_del_arr->array==NULL)
+    initArray(ind_arr, 5);
+    initDelArray(ind_del_arr, 5);
+    if (ind_arr->array == NULL || ind_del_arr->array == NULL)
     {
-        freeAllMemory(NULL,NULL,NULL,NULL,ind_arr,ind_del_arr);
+        freeAllMemory(NULL, NULL, NULL, NULL, ind_arr, ind_del_arr);
         return ERR;
     }
 
@@ -127,11 +133,11 @@ int main(int argc, char *argv[])
         /*reloading the index*/
         if (reload_index(pfile_ind, ind_arr) == ERR)
         {
-            freeAllMemory(pfile_ind,NULL,NULL,NULL,ind_arr,ind_del_arr);
+            freeAllMemory(pfile_ind, NULL, NULL, NULL, ind_arr, ind_del_arr);
             return ERR;
         }
         fclose(pfile_ind);
-        pfile_ind=NULL;
+        pfile_ind = NULL;
     }
 
     /*Check if exists file with deleted index information and store them before run programm*/
@@ -142,13 +148,13 @@ int main(int argc, char *argv[])
         if (reload_del_index(pfile_del, ind_del_arr) == ERR)
         {
             printf("problem\n");
-            freeAllMemory(pfile_ind,pfile_del,NULL,NULL,ind_arr,ind_del_arr);
+            freeAllMemory(pfile_ind, pfile_del, NULL, NULL, ind_arr, ind_del_arr);
             return ERR;
         }
 
         /*close the index file*/
         fclose(pfile_del);
-        pfile_del=NULL;
+        pfile_del = NULL;
     }
     fprintf(stdout, "Type command and arguments/s.\n");
     fprintf(stdout, "exit\n");
@@ -157,7 +163,7 @@ int main(int argc, char *argv[])
     pfile_db = fopen(db_filename, "wb");
     if (pfile_db == NULL)
     {
-        freeAllMemory(pfile_ind,pfile_del,NULL,NULL,ind_arr,ind_del_arr);
+        freeAllMemory(pfile_ind, pfile_del, NULL, NULL, ind_arr, ind_del_arr);
         return ERR;
     }
 
@@ -165,7 +171,7 @@ int main(int argc, char *argv[])
     registro = malloc(sizeof(Record));
     if (registro == NULL)
     {
-        freeAllMemory(pfile_ind,pfile_del,pfile_db,NULL,ind_arr,ind_del_arr);
+        freeAllMemory(pfile_ind, pfile_del, pfile_db, NULL, ind_arr, ind_del_arr);
         return ERR;
     }
 
@@ -204,7 +210,7 @@ int main(int argc, char *argv[])
 
             if (add_book(ind_arr, ind_del_arr, pfile_db, registro, strategy) == ERR)
             {
-                freeAllMemory(pfile_ind,pfile_del,pfile_db,registro,ind_arr,ind_del_arr);
+                freeAllMemory(pfile_ind, pfile_del, pfile_db, registro, ind_arr, ind_del_arr);
 
                 return ERR;
             }
@@ -230,7 +236,7 @@ int main(int argc, char *argv[])
             if (delete_book(ind_arr, ind_del_arr, book_id, strategy) == ERR)
             {
                 printf("2");
-                freeAllMemory(pfile_ind,pfile_del,pfile_db,registro,ind_arr,ind_del_arr);
+                freeAllMemory(pfile_ind, pfile_del, pfile_db, registro, ind_arr, ind_del_arr);
                 return ERR;
             }
         }
@@ -254,7 +260,7 @@ int main(int argc, char *argv[])
 
             if (find(ind_arr, book_id, pfile_db) == ERR)
             {
-                freeAllMemory(pfile_ind,pfile_del,pfile_db,registro,ind_arr,ind_del_arr);
+                freeAllMemory(pfile_ind, pfile_del, pfile_db, registro, ind_arr, ind_del_arr);
                 return ERR;
             }
         }
@@ -328,41 +334,40 @@ int main(int argc, char *argv[])
 
     /* Start print in the index file*/
     fclose(pfile_db);
-    pfile_db=NULL;
+    pfile_db = NULL;
 
     pfile_ind = fopen(ind_filename, "wb");
     if (pfile_ind == NULL)
     {
         printf("hola");
-        freeAllMemory(pfile_ind,pfile_del,pfile_db,registro,ind_arr,ind_del_arr);
+        freeAllMemory(pfile_ind, pfile_del, pfile_db, registro, ind_arr, ind_del_arr);
         return ERR;
     }
 
     if (index_to_file(pfile_ind, ind_arr) == ERR)
     {
 
-
-        freeAllMemory(pfile_ind,pfile_del,pfile_db,registro,ind_arr,ind_del_arr);
+        freeAllMemory(pfile_ind, pfile_del, pfile_db, registro, ind_arr, ind_del_arr);
         return ERR;
     }
     fclose(pfile_ind);
-    pfile_ind=NULL;
+    pfile_ind = NULL;
     /* finished */
     fprintf(stdout, "all done\n");
 
     pfile_del = fopen(ind_del_filename, "wb");
     if (pfile_del == NULL)
     {
-        freeAllMemory(pfile_ind,pfile_del,pfile_db,registro,ind_arr,ind_del_arr);
+        freeAllMemory(pfile_ind, pfile_del, pfile_db, registro, ind_arr, ind_del_arr);
         return ERR;
     }
-    if(index_del_to_file(pfile_del, ind_del_arr, strategy)==ERR)
+    if (index_del_to_file(pfile_del, ind_del_arr, strategy) == ERR)
     {
-        freeAllMemory(pfile_ind,pfile_del,pfile_db,registro,ind_arr,ind_del_arr);
+        freeAllMemory(pfile_ind, pfile_del, pfile_db, registro, ind_arr, ind_del_arr);
         return ERR;
     }
     fclose(pfile_del);
-    pfile_del=NULL;
-    freeAllMemory(pfile_ind,pfile_del,pfile_db,registro,ind_arr,ind_del_arr);
+    pfile_del = NULL;
+    freeAllMemory(pfile_ind, pfile_del, pfile_db, registro, ind_arr, ind_del_arr);
     return 0;
 }

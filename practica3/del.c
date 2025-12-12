@@ -15,7 +15,8 @@
 
 void initDelArray(Del_Array *arr, size_t initialSize)
 {
-    if(arr==NULL)return;
+    if (arr == NULL)
+        return;
     /* reserve memory for del arr*/
     arr->array = (Index_deleted_book **)malloc(initialSize * sizeof(Index_deleted_book *));
     if (arr->array == NULL)
@@ -234,7 +235,7 @@ long find_and_use_hole(Del_Array *del_arr, size_t required_size, int strategy)
 short delete_book(Array *ind_arr, Del_Array *ind_del_arr, int book_id, int strategy)
 {
     int result_bsc;
-    Index_deleted_book *ind_del=NULL;
+    Index_deleted_book *ind_del = NULL;
     /* Check if the book_id is in the ind or not*/
     result_bsc = binary_search(ind_arr, book_id);
     if (result_bsc == ERR)
@@ -247,8 +248,8 @@ short delete_book(Array *ind_arr, Del_Array *ind_del_arr, int book_id, int strat
     }
     else
     {
-        ind_del=malloc(sizeof(Index_deleted_book));
-        if(ind_del==NULL)
+        ind_del = malloc(sizeof(Index_deleted_book));
+        if (ind_del == NULL)
         {
             return ERR;
         }
