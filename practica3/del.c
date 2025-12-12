@@ -111,10 +111,10 @@ short index_del_to_file(FILE *pfile_del, Del_Array *ind_del_arr, int strategy)
     return OK;
 }
 
-short reload_del_index(FILE *pfile, Del_Array *del_arr)
+short reload_del_index(FILE *pfile, Del_Array *del_arr,int strategy)
 {
     Index_deleted_book *del_temp;
-    int strategy;
+    int file_strategy;
 
     /*the file or index structure is NULL*/
     if (pfile == NULL || del_arr == NULL)
@@ -123,7 +123,7 @@ short reload_del_index(FILE *pfile, Del_Array *del_arr)
     }
 
     /* read the strategy used*/
-    if (fread(&(strategy), sizeof(strategy), 1, pfile) != 1)
+    if (fread(&(file_strategy), sizeof(file_strategy), 1, pfile) != 1)
     {
         /* nothing in the file */
         return OK;

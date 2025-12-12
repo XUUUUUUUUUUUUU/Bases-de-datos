@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
     if (pfile_del != NULL)
     {
         /*reloading the index*/
-        if (reload_del_index(pfile_del, ind_del_arr) == ERR)
+        if (reload_del_index(pfile_del, ind_del_arr,strategy) == ERR)
         {
             printf("problem\n");
             freeAllMemory(pfile_ind, pfile_del, NULL, NULL, ind_arr, ind_del_arr);

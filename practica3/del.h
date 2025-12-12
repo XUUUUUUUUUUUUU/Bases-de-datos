@@ -68,10 +68,11 @@ short index_del_to_file(FILE *pfile_del, Del_Array *ind_del_arr, int strategy);
  *
  * @param pfile pointer to the file to load index: NOT NULL
  * @param ind pointer to the arry of DelIndexbook to save index from file
+ * @param strategy order of the array of deleted books
  *
  * @return OK if everythings is ok, and error in other case
  */
-short reload_del_index(FILE *pfile, Del_Array *del_arr);
+short reload_del_index(FILE *pfile, Del_Array *del_arr,int strategy);
 
 /**
  * @brief Finds a hole based on strategy, updates del_arr, and returns the offset to use.
