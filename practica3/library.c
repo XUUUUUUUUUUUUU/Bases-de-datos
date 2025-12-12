@@ -163,11 +163,17 @@ int main(int argc, char *argv[])
     fprintf(stdout, "exit\n");
 
     /* Open the file that we are going to store book information*/
-    pfile_db = fopen(db_filename, "w+b");
+    pfile_db = fopen(db_filename, "r+b");
+
     if (pfile_db == NULL)
     {
-        freeAllMemory(pfile_ind, pfile_del, NULL, NULL, ind_arr, ind_del_arr);
-        return ERR;
+        pfile_db = fopen(db_filename, "w+b");
+        
+        if (pfile_db == NULL)
+        {
+            freeAllMemory(pfile_ind, pfile_del, NULL, NULL, ind_arr, ind_del_arr);
+            return ERR;
+        }
     }
 
     /* Open the file that we are going to store deleted_index information */
