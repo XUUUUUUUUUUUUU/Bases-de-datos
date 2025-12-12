@@ -8,11 +8,11 @@ STRATEGY=first_fit
 
 .PHONY: clean run valgrind best_fit first_fit worst_fit
 
-%.o: %.c
+%.o: %.c types.h
 	@echo Compiling $<...
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(EXE): $(OBJ) types.h
+$(EXE): $(OBJ)
 	@echo Linking $(EXE)...
 	$(CC) $(CFLAGS) -o $(EXE) $(OBJ) 
 
