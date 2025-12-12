@@ -278,7 +278,6 @@ int main(int argc, char *argv[])
                 rec_size = ind_arr->array[i]->size;
                 current_id = ind_arr->array[i]->key;
 
-                /* --- CORRECCIÓN AQUÍ --- */
                 /* data_len es el tamaño del registro SIN el ID */
                 data_len = rec_size - sizeof(int);
                 /* header_skip es size_t + int */
