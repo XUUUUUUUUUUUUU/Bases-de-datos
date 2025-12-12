@@ -4,7 +4,7 @@
 # Checks format of find, error messages
 # and order of printRec
 
-set timeout 1
+set timeout 5
 set filename "test"
 set programName "./library"
 

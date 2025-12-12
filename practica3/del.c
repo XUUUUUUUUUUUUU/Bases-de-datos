@@ -234,7 +234,7 @@ long find_and_use_hole(Del_Array *del_arr, size_t required_size, int strategy)
 short delete_book(Array *ind_arr, Del_Array *ind_del_arr, int book_id, int strategy)
 {
     int result_bsc;
-    Index_deleted_book *ind_del=NULL;
+    Index_deleted_book *ind_del=NULL; 
     /* Check if the book_id is in the ind or not*/
     result_bsc = binary_search(ind_arr, book_id);
     if (result_bsc == ERR)
