@@ -77,7 +77,7 @@ short find(Array *ind_arr, int book_id, FILE *pfile_db)
     /* 1. Cuánto saltamos en el archivo: El size_t (cabecera) + el int (ID) */
     header_skip = sizeof(size_t) + sizeof(int);
 
-    /* 2. Cuánto leemos: El tamaño total del registro MENOS el ID (que ya saltamos) */
+    /* 2. Cuánto leemos: El tamaño total del registro MENOS el ID  */
     data_len = rec_size - sizeof(int);
 
     if (data_len > 0)

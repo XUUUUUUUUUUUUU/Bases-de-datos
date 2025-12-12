@@ -266,12 +266,11 @@ int main(int argc, char *argv[])
                 freeAllMemory(pfile_ind, pfile_del, pfile_db, registro, ind_arr, ind_del_arr);
                 return ERR;
             }
-            fflush(stdout);            /* 1. Escupe el texto */
-            fprintf(stdout, "exit\n"); /* 2. Avisa que terminaste */
+            fflush(stdout);           
+            fprintf(stdout, "exit\n"); 
         }
        else if (strcmp(token, "printRec") == 0)
         {
-            /* --- ELIMINA LA LÍNEA ANTIGUA DE header_size --- */
             
             for (i = 0; i < ind_arr->used; i++)
             {
@@ -279,7 +278,6 @@ int main(int argc, char *argv[])
                 rec_size = ind_arr->array[i]->size;
                 current_id = ind_arr->array[i]->key;
 
-                /* --- CORRECCIÓN AQUÍ --- */
                 /* data_len es el tamaño del registro SIN el ID */
                 data_len = rec_size - sizeof(int);
                 /* header_skip es size_t + int */
@@ -295,11 +293,8 @@ int main(int argc, char *argv[])
 
                         if ((long)fread(buffer, 1, data_len, pfile_db) == data_len)
                         {
-                            /* ... (AQUÍ PEGAS LA MISMA LÓGICA DE MEMCPY/BUCLE FOR QUE EN FIND) ... */
-                            /* (Copia el bloque interno del if del código de find.c de arriba) */
                             
                             buffer[data_len] = '\0'; 
-                            /* ... ISBN ... */
                             memcpy(isbn_buff, buffer, ISBN);
                             isbn_buff[ISBN] = '\0';
                             
@@ -310,7 +305,6 @@ int main(int argc, char *argv[])
                                 if (ptr_title[k] == '|') { ptr_pipe = ptr_title + k; break; }
                             }
                             
-                            /* ... if ptr_pipe != NULL ... lógica de copia de Titulo y Editorial ... */
                              if (ptr_pipe != NULL) {
                                 long title_len = ptr_pipe - ptr_title;
                                 if (title_len > MAX_STRING) title_len = MAX_STRING;
