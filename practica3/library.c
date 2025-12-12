@@ -295,7 +295,6 @@ int main(int argc, char *argv[])
                         {
                             
                             buffer[data_len] = '\0'; 
-                            /* ... ISBN ... */
                             memcpy(isbn_buff, buffer, ISBN);
                             isbn_buff[ISBN] = '\0';
                             
